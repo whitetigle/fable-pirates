@@ -20,5 +20,18 @@
     "html-webpack-polyfill-io-plugin": "^1.0.0",
     "webpack": "3.8.1",
     "webpack-dev-server": "2.9.4"
+  },
+  "dependencies": {
+    "@types/animejs": "^2.0.0",
+    "animejs": "^2.2.0",
+    "bulma": "^0.7.1",
+    "css-loader": "^0.28.11",
+    "file-loader": "^1.1.11",
+    "font-awesome": "^4.7.0",
+    "node-sass": "^4.9.0",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "sass-loader": "^7.0.1",
+    "style-loader": "^0.21.0"
   }
 }

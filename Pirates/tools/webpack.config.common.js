@@ -9,7 +9,10 @@ var packageJson = JSON.parse(fs.readFileSync(resolve('../package.json')).toStrin
 var errorMsg = "{0} missing in package.json";
 
 var config = {
-  entry: resolve(path.join("..", forceGet(packageJson, "fable.entry", errorMsg))),
+  entry: 
+    { 
+      app: [resolve(path.join("..", forceGet(packageJson, "fable.entry", errorMsg)))], 
+      style: [resolve('../scss/main.scss')] },
   publicDir: resolve("../public"),
   buildDir: resolve("../build"),
   nodeModulesDir: resolve("../node_modules"),
@@ -57,7 +60,24 @@ function getModuleRules(isProduction) {
         loader: 'babel-loader',
         options: babelOptions
       },
-    }
+    },
+    {
+      test: /\.s?[ac]ss$/,
+      use: [
+          isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
+          'css-loader',
+          'sass-loader',
+      ],
+  },
+  {
+      test: /\.css$/,
+      use: ['style-loader', 'css-loader']
+  },
+  {
+      test: /\.(png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)(\?.*$|$)/,
+      use: ["file-loader"]
+  }  
+  
   ];
 }
 
