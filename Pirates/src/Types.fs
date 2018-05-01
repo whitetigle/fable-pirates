@@ -3,10 +3,10 @@ module Types
 open Fable.Core
 
 [<Literal>]
-let MAXY = 3
+let MAXY = 2
 
 [<Literal>]
-let MAXX = 8
+let MAXX = 7
 
 type RenderMsg = Render
 type Msg= 
@@ -18,10 +18,16 @@ type KnobStatus = Visible | Hidden
 type Knob = 
   {
     Status:KnobStatus
+    PreviousValue:int
+    TurnLeftCounter:int
+    TurnRightCounter:int
   }
   static member Start() = 
     {
       Status = Hidden
+      PreviousValue=0
+      TurnLeftCounter=0
+      TurnRightCounter=0
     }
 
 type Model = 

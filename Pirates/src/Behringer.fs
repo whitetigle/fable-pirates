@@ -2,6 +2,9 @@ module Behringer
 
 open Fable.Import.WebMIDI
 
+ [<Literal>]
+let INPUT = "input-0"
+
 type Alert =
   | Info of string
   | Success of string
@@ -20,6 +23,9 @@ type Model =
       Counter:int
 }
 
+type Index = int
+type KnobValue = int
+
 type Msg = 
   | MIDIConnected of IMIDIAccess     // MIDI successfully connected
   | MIDIStateChange of IMIDIAccess                  // MIDI successfully connected
@@ -28,10 +34,10 @@ type Msg =
   | InputSelected of string
   | SendNote                        // Send a MIDI note
   | OnMessage of byte array
+  | OnKnob of Index * KnobValue
 
 open Elmish
 open Fable.Import
-open Fable.Helpers.React
 
 let init () : Model*Cmd<Msg> =
     { 
@@ -57,6 +63,7 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
     
     match msg with
     | MIDIConnected midiAccess -> 
+
         let stateChangeSub dispatch =
           let onStateChange _ =
             dispatch (MIDIStateChange midiAccess)
@@ -65,7 +72,8 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         { model with MIDIAccess = Some midiAccess
                      IsMIDIEnabled = true }, Cmd.batch [ success "MIDI connected"
                                                          Cmd.ofSub stateChangeSub
-                                                         Cmd.ofMsg (MIDIStateChange midiAccess)]
+                                                         Cmd.ofMsg (MIDIStateChange midiAccess)
+                                                         Cmd.ofMsg (InputSelected INPUT)]
     | MIDIStateChange midiAccess->
 
         let getSelectedId map selected =
@@ -81,7 +89,7 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
             |> Map.toList 
             |> List.filter (fun (_, i) -> i.Name |> Option.filter (fun v -> v <> "") |> Option.isSome)
         
-        let selectedInput = getSelectedId midiAccess.Inputs model.SelectedMIDIInput
+        let selectedInput = getSelectedId midiAccess.Inputs None
         
         { model with 
              MIDIInputs = inputs
@@ -94,7 +102,10 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
                      IsMIDIEnabled = false
                      SelectedMIDIInput = None }, error ex.Message
 
-    | Message alert -> { model with Messages = alert :: model.Messages |> List.truncate 5 }, Cmd.none
+    | Message alert -> 
+      printfn "%A" alert 
+      model, Cmd.none
+
     | OnMessage data -> 
         printfn "MIDI message received at timestamp [ %i bytes]" data.Length
         let status = int data.[0]
@@ -103,13 +114,18 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         let velocity = (int data.[2]) &&& 0x7F
 
 
+        #if DEBUG
         printfn "%08X %08X %08X %08X" status command channel velocity
         printfn "%i %i %i %i" status command channel velocity
+        #endif
+        
         printfn "counter %i" model.Counter
 
-        { model with Counter=model.Counter+1}, Cmd.none
+        { model with Counter=model.Counter+1}, Cmd.ofMsg <| OnKnob (channel,velocity)
 
     | InputSelected id ->
+
+        printfn "%s" id
 
         let onMidiMessageSub (dispatch: Dispatch<Msg>) = 
             let onMidiMessage (ev: WebMIDI.IMIDIMessageEvent) =
@@ -154,54 +170,3 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         | _, _ -> model, error "No MIDI connection"
         *)
 
-open Fable.Helpers.React
-open Fable.Helpers.React.Props
-open Fable.Core.JsInterop
-
-let view model dispatch =
-    div [ ClassName "container" ] [
-        div [ ClassName "row" ] [
-            div [ ClassName "col" ] [
-                div [ ClassName "card" ] [
-                    div [ ClassName "card-header" ] [ strong [] [ str "MIDI Test"] ]
-                    div [ ClassName "card-body" ] [
-                        div [ ClassName "form-group" ] [
-                            label [ ClassName "col-form-label" ] [ str "Inputs" ]
-                            select [ ClassName "form-control" 
-                                     Value (model.SelectedMIDIInput |> Option.defaultValue "") 
-                                     OnChange (fun (ev:React.FormEvent) -> dispatch (InputSelected (!! ev.target?value))) ] [
-                                         for key, name in model.MIDIInputs do
-                                            yield option [ Key key ] [ str key ]
-                                     ]
-                        ]
-                    ]
-                    (*
-                    div [ ClassName "card-footer" ] [
-                        button [ ClassName "btn btn-primary" 
-                                 OnClick (fun _ -> dispatch SendNote) ] [ str "Send Note" ]
-                    ]
-                    *)
-                ]
-            ]
-
-            div [ ClassName "col" ] [
-                div [ ClassName "card" ] [ 
-                    div [ ClassName "card-header" ] [ strong [] [ str "MIDI Messages"] ]
-                    div [ ClassName "card-body" ] [ 
-                        for msg in model.Messages do
-                            match msg with
-                            | Info msg -> yield div [ ClassName "alert alert-info" ] [ str msg ]
-                            | Success msg -> yield div [ ClassName "alert alert-success" ] [ str msg ]
-                            | Warning msg -> yield div [ ClassName "alert alert-warning" ] [ str msg ]
-                            | Error msg -> yield div [ ClassName "alert alert-danger" ] [ str msg ]
-                    ]
-                ]
-            ]
-        ]
-    ]
-
-open Elmish.React
-
-Program.mkProgram init update view
-|> Program.withReact "midi-app"
-|> Program.run

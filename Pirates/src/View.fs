@@ -14,7 +14,13 @@ let root (model:Model) dispatch=
       let columns = 
         rows
         |> Seq.map( fun knob ->
-          Column.column [] [str (string knob.Status)]
+          Column.column [] [
+            yield (
+              match knob.Status with 
+              | KnobStatus.Hidden -> Notification.notification [ Notification.Color IsDark ] [ str (string knob.PreviousValue) ]  
+              | Visible -> Notification.notification [ Notification.Color IsSuccess ] [ str (string knob.PreviousValue) ]  
+            )
+          ]
         )
         |> Seq.toList
       
@@ -22,6 +28,8 @@ let root (model:Model) dispatch=
     )
     |> Seq.toList
 
-  Hero.hero [] 
-    knobs
+  Hero.hero [] [
+    Hero.body [] knobs
+  ]
+    
   
