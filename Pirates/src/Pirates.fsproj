@@ -6,8 +6,11 @@
     <Compile Include="AnimeJs.fs" />
     <Compile Include="WebMIDI.fs" />
     <Compile Include="Behringer.fs" />
+    <Compile Include="Utils.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="CardHelper.fs" />
     <Compile Include="View.fs" />
+    <Compile Include="Knob.fs" />
     <Compile Include="State.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>

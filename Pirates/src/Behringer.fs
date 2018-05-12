@@ -114,13 +114,15 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         let velocity = (int data.[2]) &&& 0x7F
 
 
+        (*
         #if DEBUG
         printfn "%08X %08X %08X %08X" status command channel velocity
         printfn "%i %i %i %i" status command channel velocity
         #endif
         
         printfn "counter %i" model.Counter
-
+        *)
+        
         { model with Counter=model.Counter+1}, Cmd.ofMsg <| OnKnob (channel,velocity)
 
     | InputSelected id ->

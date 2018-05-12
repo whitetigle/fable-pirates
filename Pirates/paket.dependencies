@@ -9,3 +9,4 @@ nuget Fulma
 nuget Fable.Elmish.React
 nuget Fable.PowerPack
 nuget Fable.React
+nuget Fable.Elmish.Debugger

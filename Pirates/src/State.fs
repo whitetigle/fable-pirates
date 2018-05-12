@@ -2,91 +2,194 @@ module State
 open Elmish
 open Types
 open Fable.Import
+open Utils
 
-[<Literal>]
-let KNOBSTARTINDEX = 80
 
-[<Literal>]
-let KNOB_THRESHOLD = 10
+module EventHelper = 
+
+  let NewGame() = 
+    [
+      {Kind=FloatingCrate;Required=Some [Harpoon;Rope];WhatsInside=Some [Meat]}
+      {Kind=Island;Required=Some[Dinghy];WhatsInside=None}
+      {Kind=Fish;Required=Some[Harpoon;Rope];WhatsInside=Some [Meat]}
+      {Kind=NoEvent;Required=None;WhatsInside=None}
+      {Kind=MessageInABottle;Required=Some[Rope];WhatsInside=None}
+      {Kind=NoEvent;Required=None;WhatsInside=None}
+      {Kind=FloatingCrate;Required=Some [Harpoon;Rope];WhatsInside=None}
+    ]
+
+  let AddEvent list = 
+    let newEvent = {Kind=FloatingCrate;Required=Some[Harpoon;Harpoon;Harpoon];WhatsInside=None}
+    let list = list |> List.tail
+    list @ [newEvent]
+
+let checkCardsInHand model = 
+  let found = model.Deck |> CardHelper.getActiveCards
+  let countFound = found.Length
+  if countFound >= 1 then 
+    model, Cmd.ofMsg (Solve found)
+  else
+    model, Cmd.none
+
+let showMessage title model =
+  let notification  = {model.NotificationMessage with Title=title |> Some } 
+  { model with NotificationMessage=notification}
+
+let hideMessage model = 
+  {
+    model with 
+      NotificationMessage = {model.NotificationMessage with Title=None}
+  }
+
+let decreaseFood canDoIt model =
+  if canDoIt then 
+    let updatedFood = 
+      let newState = model.Stats.Food - 1
+      if newState <= 0 then 0 else newState
+    {model with Stats = { model.Stats with Food = updatedFood}}
+  else model 
+
+let stopThere model = 
+  model, Cmd.none
+
+let goToNextState next model = 
+  model, Cmd.ofMsg next
 
 let init _ = 
   let bModel,bCmd = Behringer.init()
 
   Model.Create bModel,
-  Cmd.batch [ Cmd.map BehringerMsg bCmd]
+  Cmd.batch [ Cmd.map BehringerMsg bCmd; Cmd.ofMsg StartGame]
+
+
 
 let update (msg: Msg) (model: Model) =
 
   match msg with 
+  | HideNotificationMessage -> 
+    model
+    |> hideMessage
+    |> stopThere
+
+  | Msg.GameOver ->
+    model
+    |> showMessage (GameOver "Sorry mate! Better luck next time...")
+    |> goToNextState StartGame
+
+  | StartGame -> 
+    { model with 
+        Stats=Stats.Starting
+        Events=EventHelper.NewGame()
+    } 
+    |> CardHelper.shuffleHand [Dinghy;Rope;Harpoon]
+    |> stopThere
+  
+  | Solve hand -> 
+    
+    let requested = 
+      hand 
+      |> List.filter( fun card ->  card.Item.IsSome )
+      |> List.map( fun card -> string card.Item.Value )
+      |> List.sortDescending
+      |> String.concat ""
+
+    printfn "requested %A" requested
+
+    let outcomes = 
+      model.Events
+      |> List.filter( fun event -> 
+        match event.Required with 
+        | Some list -> 
+          let current = 
+            list
+            |> List.map( fun item -> string item)
+            |> List.sortDescending
+            |> String.concat ""
+          
+          current = requested
+        | None -> 
+          false
+      )
+    printfn "outcomes %A" outcomes
+
+    if outcomes.Length > 0 then
+      //let 
+      printfn "we got some cards %A" outcomes
+      model, Cmd.none
+    else
+      model
+      |> stopThere
+      
+  | ToggleCard pos -> 
+    
+    let mutable didSomething = false
+    let updatedCards = 
+      model.Deck
+      |> List.mapi( fun i cards -> 
+        cards
+        |> List.mapi( fun j card -> 
+          if i=pos.X && j = pos.Y then 
+            match card.Item with 
+            | Some item ->
+              match item with 
+              | Nothing -> card
+              | _ ->  
+                let updatedStatus = 
+                  match card.Status with 
+                  | Activated -> 
+                    Disabled
+                  | Disabled -> 
+                    didSomething <- true
+                    Activated
+                {card with Status=updatedStatus}
+            | None -> card
+          else
+            card
+        )
+      ) 
+    
+    { model with Deck=updatedCards} 
+    |> decreaseFood didSomething
+    |> checkCardsInHand
+      (*
+      let found = updatedCards |> CardHelper.getActiveCards
+      let countFound = found.Length
+      if countFound >= 1 then 
+        { model with Deck=updatedCards}, Cmd.ofMsg (Solve found)
+      else
+        let remainingFood = model.Stats.Food - 1
+        if remainingFood <= 0 then 
+          if model.Stats.Crew > 1 then 
+            let updatedCrew = model.Stats.Crew - 1
+            let updatedStats = {model.Stats with Food=EAT_CREW;Crew=updatedCrew}
+            let notification  = {model.NotificationMessage with Title=EatCrew "No more food? Let's eat a crew member!" |> Some} 
+            { 
+              model with 
+                Stats = updatedStats
+                NotificationMessage=notification
+                Deck=updatedCards
+                //Events=EventHelper.AddEvent model.Events
+            },Cmd.none
+          else 
+            { model with Deck=updatedCards} |> hideCards, Cmd.ofMsg Msg.GameOver
+        else 
+          let updatedStats = {model.Stats with Food=remainingFood}
+          { 
+            model with 
+              Stats = updatedStats
+              Deck=updatedCards
+              //Events=EventHelper.AddEvent model.Events
+          }, Cmd.none*)
+
   | BehringerMsg bMsg ->
       match bMsg with 
       | Behringer.OnKnob (index, value) -> 
-        let realIndex = index - KNOBSTARTINDEX
-        let width = MAXX + 1
-
-        // WTF is going on with these indexes?
-        let x,y = 
-          let y = realIndex % width
-          let y = if y = 0 then MAXX else y - 1          
-          let x = realIndex / width
-          let x = if y = MAXX then x - 1 else x
-          x,y
-
-        let knob = model.Knobs.[x].[y]
-        let updatedKnob = 
-
-          let turnLeft knob = 
-            let knob = {knob with TurnRightCounter=0}
-            match knob.TurnLeftCounter with 
-            | times when times > KNOB_THRESHOLD ->
-              {knob with Status=Hidden}
-            | _ -> 
-              {knob with TurnLeftCounter=knob.TurnLeftCounter+1}
-
-          let turnRight knob = 
-            let knob = {knob with TurnLeftCounter=0}
-            match knob.TurnRightCounter with 
-            | times when times > KNOB_THRESHOLD ->
-              {knob with Status=Visible}
-            | _ -> 
-              {knob with TurnRightCounter=knob.TurnRightCounter+1}
-
-          let updated = 
-            match knob.PreviousValue,value with 
-            | _, 0 -> turnLeft knob
-
-            | _, 127 -> turnRight knob
-
-            |  prev, newOne when newOne < prev -> turnLeft knob            
-            
-            | prev, newOne when newOne > prev -> turnRight knob
-
-            | _ -> knob
-          
-          { updated with PreviousValue=value}
- 
-        let updatedKnobs = 
-          model.Knobs
-          |> Array.mapi( fun i knobs -> 
-                knobs
-                |> Array.mapi( fun j knob -> 
-                  if i=x && j=y then 
-                    updatedKnob
-                  else
-                    knob
-                )
-          )
-        let updatedModel = 
-          { model
-            with Knobs=updatedKnobs
-          }
-
-        updatedModel, Cmd.none
+        let updatedModel, didSomething = model |> Knob.turn index value
+        updatedModel 
+        |> decreaseFood didSomething
+        |> checkCardsInHand
 
       | _ -> 
         let (m, c) = Behringer.update bMsg model.Behringer
         { model with Behringer = m },
         Cmd.map BehringerMsg c
-
-  | _ -> 
-    model,Cmd.none
