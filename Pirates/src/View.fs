@@ -14,7 +14,7 @@ let root (model:Model) dispatch=
       let columns = 
         rows
         |> Seq.map( fun knob ->
-          Column.column [ Column.Props[ OnClick ( fun _ -> (ToggleCard knob.Pos) |> dispatch)] ] [
+          Column.column [ Column.Props[ OnClick ( fun _ -> (FlipCard knob.Pos) |> dispatch)] ] [
             yield (
               let label = 
                 match knob.Item with 

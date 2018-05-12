@@ -91,7 +91,7 @@ type Card =
 type RenderMsg = Render
 type Msg= 
   | BehringerMsg of Behringer.Msg
-  | ToggleCard of Position
+  | FlipCard of Position
   | HideNotificationMessage
   | GameOver
   | StartGame
@@ -117,6 +117,7 @@ type Model =
     Stats:Stats
     NotificationMessage:NotificationMessage
     Events:Event list
+    GameOver:bool
   }
   static member Create (bModel:Behringer.Model) = 
     let knobs = 
@@ -132,4 +133,5 @@ type Model =
       Stats=Stats.Starting
       NotificationMessage=NotificationMessage.Default
       Events=[]
+      GameOver=false
     }

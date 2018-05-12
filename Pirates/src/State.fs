@@ -4,6 +4,21 @@ open Types
 open Fable.Import
 open Utils
 
+module StateFlow = 
+
+  // sometimes it's great to debug from the console too
+  let printMessage msg model = 
+    printfn "%A" msg
+    model
+
+  let stopThere model = 
+    model, Cmd.none
+
+  let goToNextState next model = 
+    model, Cmd.ofMsg next
+
+  let goToNextStates nextStates model = 
+    model, Cmd.batch nextStates
 
 module EventHelper = 
 
@@ -23,7 +38,7 @@ module EventHelper =
     let list = list |> List.tail
     list @ [newEvent]
 
-let checkCardsInHand model = 
+let checkCardsInHand (model:Model) = 
   let found = model.Deck |> CardHelper.getActiveCards
   let countFound = found.Length
   if countFound >= 1 then 
@@ -49,11 +64,39 @@ let decreaseFood canDoIt model =
     {model with Stats = { model.Stats with Food = updatedFood}}
   else model 
 
-let stopThere model = 
-  model, Cmd.none
+let checkFoodShortage model = 
+  if model.Stats.Food <= 0 then 
+    if model.Stats.Crew > 1 then 
+      let updatedCrew = model.Stats.Crew - 1
+      let updatedStats = {model.Stats with Food=EAT_CREW;Crew=updatedCrew}
+      let notification  = {model.NotificationMessage with Title=EatCrew "No more food? Let's eat a crew member!" |> Some} 
+      { 
+        model with 
+          Stats = updatedStats
+          NotificationMessage=notification
+      }    
+    else 
+      model
+  else 
+    model    
 
-let goToNextState next model = 
-  model, Cmd.ofMsg next
+
+let displayGameOver (model:Model) = 
+  model 
+  |> CardHelper.disableAll
+  |> StateFlow.goToNextState Msg.GameOver
+
+module Logic = 
+  let nextTurn didSomething model =    
+    let updatedModel = 
+       model
+      |> decreaseFood didSomething
+      |> checkFoodShortage
+    
+    if updatedModel.GameOver then
+      updatedModel |> displayGameOver
+    else
+      updatedModel |> checkCardsInHand
 
 let init _ = 
   let bModel,bCmd = Behringer.init()
@@ -69,12 +112,14 @@ let update (msg: Msg) (model: Model) =
   | HideNotificationMessage -> 
     model
     |> hideMessage
-    |> stopThere
+    |> StateFlow.printMessage msg
+    |> StateFlow.stopThere
 
   | Msg.GameOver ->
     model
     |> showMessage (GameOver "Sorry mate! Better luck next time...")
-    |> goToNextState StartGame
+    |> StateFlow.printMessage msg
+    |> StateFlow.goToNextState StartGame
 
   | StartGame -> 
     { model with 
@@ -82,7 +127,8 @@ let update (msg: Msg) (model: Model) =
         Events=EventHelper.NewGame()
     } 
     |> CardHelper.shuffleHand [Dinghy;Rope;Harpoon]
-    |> stopThere
+    |> StateFlow.printMessage msg
+    |> StateFlow.stopThere
   
   | Solve hand -> 
     
@@ -115,12 +161,16 @@ let update (msg: Msg) (model: Model) =
     if outcomes.Length > 0 then
       //let 
       printfn "we got some cards %A" outcomes
-      model, Cmd.none
+      model
+      |> StateFlow.printMessage msg
+      |> StateFlow.stopThere
+
     else
       model
-      |> stopThere
+      |> StateFlow.printMessage msg
+      |> StateFlow.stopThere
       
-  | ToggleCard pos -> 
+  | FlipCard pos -> 
     
     let mutable didSomething = false
     let updatedCards = 
@@ -149,45 +199,23 @@ let update (msg: Msg) (model: Model) =
       ) 
     
     { model with Deck=updatedCards} 
-    |> decreaseFood didSomething
-    |> checkCardsInHand
-      (*
-      let found = updatedCards |> CardHelper.getActiveCards
-      let countFound = found.Length
-      if countFound >= 1 then 
-        { model with Deck=updatedCards}, Cmd.ofMsg (Solve found)
-      else
-        let remainingFood = model.Stats.Food - 1
-        if remainingFood <= 0 then 
-          if model.Stats.Crew > 1 then 
-            let updatedCrew = model.Stats.Crew - 1
-            let updatedStats = {model.Stats with Food=EAT_CREW;Crew=updatedCrew}
-            let notification  = {model.NotificationMessage with Title=EatCrew "No more food? Let's eat a crew member!" |> Some} 
-            { 
-              model with 
-                Stats = updatedStats
-                NotificationMessage=notification
-                Deck=updatedCards
-                //Events=EventHelper.AddEvent model.Events
-            },Cmd.none
-          else 
-            { model with Deck=updatedCards} |> hideCards, Cmd.ofMsg Msg.GameOver
-        else 
-          let updatedStats = {model.Stats with Food=remainingFood}
-          { 
-            model with 
-              Stats = updatedStats
-              Deck=updatedCards
-              //Events=EventHelper.AddEvent model.Events
-          }, Cmd.none*)
+    |> StateFlow.printMessage msg
+    |> Logic.nextTurn didSomething
 
   | BehringerMsg bMsg ->
       match bMsg with 
       | Behringer.OnKnob (index, value) -> 
-        let updatedModel, didSomething = model |> Knob.turn index value
-        updatedModel 
-        |> decreaseFood didSomething
-        |> checkCardsInHand
+        match model.NotificationMessage.Title with 
+        | Some _ -> 
+          model 
+          |> StateFlow.printMessage msg
+          |> StateFlow.goToNextState HideNotificationMessage
+        
+        | None -> 
+          let updatedModel, didSomething = model |> Knob.turn index value
+          updatedModel 
+          |> StateFlow.printMessage msg
+          |> Logic.nextTurn didSomething
 
       | _ -> 
         let (m, c) = Behringer.update bMsg model.Behringer
