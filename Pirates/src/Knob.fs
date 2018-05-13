@@ -19,7 +19,7 @@ let turn index value model =
     let x = if y = MAXX then x - 1 else x
     x,y
 
-  let card = model.Deck.[x].[y]
+  let card = model.Hand.[x].[y]
 
   // since we can get many model updates we only want to trigger actual test if the 
   // state of the card actually changed
@@ -67,7 +67,7 @@ let turn index value model =
     | None -> card
 
   let updatedCards = 
-    model.Deck
+    model.Hand
     |> List.mapi( fun i cards -> 
           cards
           |> List.mapi( fun j card -> 
@@ -79,5 +79,5 @@ let turn index value model =
     )
 
   { model
-    with Deck=updatedCards
+    with Hand=updatedCards
   }, didSomething

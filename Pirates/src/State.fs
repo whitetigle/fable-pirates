@@ -7,7 +7,7 @@ open Utils
 module StateFlow = 
 
   // sometimes it's great to debug from the console too
-  let printMessage msg model = 
+  let logMessage msg model = 
     printfn "%A" msg
     model
 
@@ -24,13 +24,6 @@ module EventHelper =
 
   let NewGame() = 
     [
-      {Kind=FloatingCrate;Required=Some [Harpoon;Rope];WhatsInside=Some [Meat]}
-      {Kind=Island;Required=Some[Dinghy];WhatsInside=None}
-      {Kind=Fish;Required=Some[Harpoon;Rope];WhatsInside=Some [Meat]}
-      {Kind=NoEvent;Required=None;WhatsInside=None}
-      {Kind=MessageInABottle;Required=Some[Rope];WhatsInside=None}
-      {Kind=NoEvent;Required=None;WhatsInside=None}
-      {Kind=FloatingCrate;Required=Some [Harpoon;Rope];WhatsInside=None}
     ]
 
   let AddEvent list = 
@@ -39,7 +32,7 @@ module EventHelper =
     list @ [newEvent]
 
 let checkCardsInHand (model:Model) = 
-  let found = model.Deck |> CardHelper.getActiveCards
+  let found = model.Hand |> CardHelper.getActiveCards
   let countFound = found.Length
   if countFound >= 1 then 
     model, Cmd.ofMsg (Solve found)
@@ -80,7 +73,6 @@ let checkFoodShortage model =
   else 
     model    
 
-
 let displayGameOver (model:Model) = 
   model 
   |> CardHelper.disableAll
@@ -100,10 +92,8 @@ module Logic =
 
 let init _ = 
   let bModel,bCmd = Behringer.init()
-
   Model.Create bModel,
   Cmd.batch [ Cmd.map BehringerMsg bCmd; Cmd.ofMsg StartGame]
-
 
 
 let update (msg: Msg) (model: Model) =
@@ -112,22 +102,25 @@ let update (msg: Msg) (model: Model) =
   | HideNotificationMessage -> 
     model
     |> hideMessage
-    |> StateFlow.printMessage msg
+    |> StateFlow.logMessage msg
     |> StateFlow.stopThere
 
   | Msg.GameOver ->
     model
     |> showMessage (GameOver "Sorry mate! Better luck next time...")
-    |> StateFlow.printMessage msg
+    |> StateFlow.logMessage msg
     |> StateFlow.goToNextState StartGame
 
-  | StartGame -> 
+  | StartGame ->
+    
+    let startingHand = CardHelper.startHand
+
     { model with 
         Stats=Stats.Starting
-        Events=EventHelper.NewGame()
+        Events=CardHelper.getCompatibleRules startingHand
     } 
-    |> CardHelper.shuffleHand [Dinghy;Rope;Harpoon]
-    |> StateFlow.printMessage msg
+    |> CardHelper.shuffleHand startingHand
+    |> StateFlow.logMessage msg
     |> StateFlow.stopThere
   
   | Solve hand -> 
@@ -136,8 +129,8 @@ let update (msg: Msg) (model: Model) =
       hand 
       |> List.filter( fun card ->  card.Item.IsSome )
       |> List.map( fun card -> string card.Item.Value )
-      |> List.sortDescending
-      |> String.concat ""
+      |> List.sort
+      |> set
 
     printfn "requested %A" requested
 
@@ -149,10 +142,10 @@ let update (msg: Msg) (model: Model) =
           let current = 
             list
             |> List.map( fun item -> string item)
-            |> List.sortDescending
-            |> String.concat ""
+            |> List.sort
+            |> set
           
-          current = requested
+          current.IsSubsetOf requested
         | None -> 
           false
       )
@@ -162,44 +155,21 @@ let update (msg: Msg) (model: Model) =
       //let 
       printfn "we got some cards %A" outcomes
       model
-      |> StateFlow.printMessage msg
+      |> StateFlow.logMessage msg
       |> StateFlow.stopThere
 
     else
       model
-      |> StateFlow.printMessage msg
+      |> StateFlow.logMessage msg
       |> StateFlow.stopThere
       
   | FlipCard pos -> 
     
-    let mutable didSomething = false
-    let updatedCards = 
-      model.Deck
-      |> List.mapi( fun i cards -> 
-        cards
-        |> List.mapi( fun j card -> 
-          if i=pos.X && j = pos.Y then 
-            match card.Item with 
-            | Some item ->
-              match item with 
-              | Nothing -> card
-              | _ ->  
-                let updatedStatus = 
-                  match card.Status with 
-                  | Activated -> 
-                    Disabled
-                  | Disabled -> 
-                    didSomething <- true
-                    Activated
-                {card with Status=updatedStatus}
-            | None -> card
-          else
-            card
-        )
-      ) 
+    let updatedCards, didSomething = 
+      model |> CardHelper.flipCard pos
     
-    { model with Deck=updatedCards} 
-    |> StateFlow.printMessage msg
+    { model with Hand=updatedCards} 
+    |> StateFlow.logMessage msg
     |> Logic.nextTurn didSomething
 
   | BehringerMsg bMsg ->
@@ -208,13 +178,13 @@ let update (msg: Msg) (model: Model) =
         match model.NotificationMessage.Title with 
         | Some _ -> 
           model 
-          |> StateFlow.printMessage msg
+          |> StateFlow.logMessage msg
           |> StateFlow.goToNextState HideNotificationMessage
         
         | None -> 
           let updatedModel, didSomething = model |> Knob.turn index value
           updatedModel 
-          |> StateFlow.printMessage msg
+          |> StateFlow.logMessage msg
           |> Logic.nextTurn didSomething
 
       | _ -> 

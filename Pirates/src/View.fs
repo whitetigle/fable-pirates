@@ -8,36 +8,40 @@ open Fable.Helpers.React.Props
 open Fulma
 
 let root (model:Model) dispatch= 
-  let knobs = 
-    model.Deck
+  
+  let makeCard card = 
+    let label = 
+      match card.Item with 
+      | Some item -> (string item)
+      | None -> ""
+    match card.Status with 
+    | CardStatus.Disabled -> 
+      match card.Item with 
+      | Some item -> 
+        match item with 
+        | Nothing -> 
+          Notification.notification [ Notification.Color IsLight ] 
+            [ str "Empty Slot" ]  
+        | _ ->
+          Notification.notification [ Notification.Color IsDark ] 
+            [Heading.h6 [] [str label]]
+//                  [ str (string knob.PreviousValue) ]
+      | None -> failwith "not handled"    
+    
+    | Activated ->
+      Notification.notification [ Notification.Color IsSuccess ] 
+        [Heading.h6 [] [str label]]
+//                  [ str (string knob.PreviousValue) ]  
+
+
+  let cards = 
+    model.Hand
     |> Seq.map( fun rows -> 
       let columns = 
         rows
-        |> Seq.map( fun knob ->
-          Column.column [ Column.Props[ OnClick ( fun _ -> (FlipCard knob.Pos) |> dispatch)] ] [
-            yield (
-              let label = 
-                match knob.Item with 
-                | Some item -> (string item)
-                | None -> ""
-              match knob.Status with 
-              | CardStatus.Disabled -> 
-                match knob.Item with 
-                | Some item -> 
-                  match item with 
-                  | Nothing -> 
-                    Notification.notification [ Notification.Color IsLight ] 
-                      [ str "Empty Slot" ]  
-                  | _ -> 
-                    Notification.notification [ Notification.Color IsDark ] 
-                      [ str label ]  
-  //                  [ str (string knob.PreviousValue) ]
-                | None -> failwith "not handled"    
-              | Activated -> 
-                Notification.notification [ Notification.Color IsSuccess ] 
-                  [ str label ]  
-//                  [ str (string knob.PreviousValue) ]  
-            )
+        |> Seq.map( fun card ->
+          Column.column [ Column.Props[ OnClick ( fun _ -> (FlipCard card.Pos) |> dispatch)] ] [
+            makeCard card
           ]
         )
         |> Seq.toList
@@ -111,7 +115,7 @@ let root (model:Model) dispatch=
   Hero.hero [] [
     notification
     header
-    Hero.body [] knobs
+    Hero.body [] cards
   ]
     
   

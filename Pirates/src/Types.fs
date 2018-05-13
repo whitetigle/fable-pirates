@@ -18,7 +18,7 @@ type Position =
 let crew = 1
 
 [<Literal>]
-let EAT_CREW = 3
+let EAT_CREW = 30
 
 [<Literal>]
 let CARDS_COUNT = 24
@@ -112,7 +112,7 @@ type NotificationMessage =
 
 type Model = 
   { 
-    Deck:Card list list
+    Hand:Card list list
     Behringer:Behringer.Model 
     Stats:Stats
     NotificationMessage:NotificationMessage
@@ -120,7 +120,7 @@ type Model =
     GameOver:bool
   }
   static member Create (bModel:Behringer.Model) = 
-    let knobs = 
+    let hand = 
         [0..MAXY] 
         |> List.mapi( fun i _ -> 
             [0..MAXX] 
@@ -128,10 +128,11 @@ type Model =
           )
         )
     {
-      Deck = knobs
+      Hand = hand
       Behringer= bModel
       Stats=Stats.Starting
       NotificationMessage=NotificationMessage.Default
       Events=[]
       GameOver=false
     }
+
