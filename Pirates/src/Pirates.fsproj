@@ -6,6 +6,7 @@
     <Compile Include="AnimeJs.fs" />
     <Compile Include="WebMIDI.fs" />
     <Compile Include="Behringer.fs" />
+    <Compile Include="GoGoFulma.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="CardHelper.fs" />

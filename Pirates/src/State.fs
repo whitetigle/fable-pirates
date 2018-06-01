@@ -1,8 +1,6 @@
 module State
 open Elmish
 open Types
-open Fable.Import
-open Utils
 
 module StateFlow = 
 
@@ -20,24 +18,9 @@ module StateFlow =
   let goToNextStates nextStates model = 
     model, Cmd.batch nextStates
 
-module EventHelper = 
-
-  let NewGame() = 
-    [
-    ]
-
-  let AddEvent list = 
-    let newEvent = {Kind=FloatingCrate;Required=Some[Harpoon;Harpoon;Harpoon];WhatsInside=None}
-    let list = list |> List.tail
-    list @ [newEvent]
-
 let checkCardsInHand (model:Model) = 
-  let found = model.Hand |> CardHelper.getActiveCards
-  let countFound = found.Length
-  if countFound >= 1 then 
-    model, Cmd.ofMsg (Solve found)
-  else
-    model, Cmd.none
+  let found = model.Hand |> CardHelper.getActiveCard
+  { model with ActiveCard=Some found}, Cmd.ofMsg (Solve found)
 
 let showMessage title model =
   let notification  = {model.NotificationMessage with Title=title |> Some } 
@@ -49,30 +32,6 @@ let hideMessage model =
       NotificationMessage = {model.NotificationMessage with Title=None}
   }
 
-let decreaseFood canDoIt model =
-  if canDoIt then 
-    let updatedFood = 
-      let newState = model.Stats.Food - 1
-      if newState <= 0 then 0 else newState
-    {model with Stats = { model.Stats with Food = updatedFood}}
-  else model 
-
-let checkFoodShortage model = 
-  if model.Stats.Food <= 0 then 
-    if model.Stats.Crew > 1 then 
-      let updatedCrew = model.Stats.Crew - 1
-      let updatedStats = {model.Stats with Food=EAT_CREW;Crew=updatedCrew}
-      let notification  = {model.NotificationMessage with Title=EatCrew "No more food? Let's eat a crew member!" |> Some} 
-      { 
-        model with 
-          Stats = updatedStats
-          NotificationMessage=notification
-      }    
-    else 
-      model
-  else 
-    model    
-
 let displayGameOver (model:Model) = 
   model 
   |> CardHelper.disableAll
@@ -82,8 +41,6 @@ module Logic =
   let nextTurn didSomething model =    
     let updatedModel = 
        model
-      |> decreaseFood didSomething
-      |> checkFoodShortage
     
     if updatedModel.GameOver then
       updatedModel |> displayGameOver
@@ -111,24 +68,19 @@ let update (msg: Msg) (model: Model) =
     |> StateFlow.logMessage msg
     |> StateFlow.goToNextState StartGame
 
-  | StartGame ->
-    
-    let startingHand = CardHelper.startHand
-
-    { model with 
-        Stats=Stats.Starting
-        Events=CardHelper.getCompatibleRules startingHand
-    } 
-    |> CardHelper.shuffleHand startingHand
+  | StartGame ->    
+    model
+    |> CardHelper.startingHand CARDS_COUNT
+    |> CardHelper.shuffleHand 
     |> StateFlow.logMessage msg
     |> StateFlow.stopThere
   
   | Solve hand -> 
     
+    (*
     let requested = 
       hand 
-      |> List.filter( fun card ->  card.Item.IsSome )
-      |> List.map( fun card -> string card.Item.Value )
+      |> List.map( fun card -> string card.Item )
       |> List.sort
       |> set
 
@@ -158,15 +110,15 @@ let update (msg: Msg) (model: Model) =
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
 
-    else
+    else*)
       model
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
       
-  | FlipCard pos -> 
+  | FlipCard -> 
     
     let updatedCards, didSomething = 
-      model |> CardHelper.flipCard pos
+      model |> CardHelper.flipCard
     
     { model with Hand=updatedCards} 
     |> StateFlow.logMessage msg

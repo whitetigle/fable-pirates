@@ -34,7 +34,7 @@ type Msg =
   | InputSelected of string
   | SendNote                        // Send a MIDI note
   | OnMessage of byte array
-  | OnKnob of Index * KnobValue
+  | OnKnob of Index * KnobValue option
 
 open Elmish
 open Fable.Import
@@ -123,7 +123,7 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         printfn "counter %i" model.Counter
         *)
         
-        { model with Counter=model.Counter+1}, Cmd.ofMsg <| OnKnob (channel,velocity)
+        { model with Counter=model.Counter+1}, Cmd.ofMsg <| OnKnob (channel, Some velocity)
 
     | InputSelected id ->
 

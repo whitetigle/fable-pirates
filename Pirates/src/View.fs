@@ -6,91 +6,25 @@ open Fable.Core.JsInterop
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fulma
+open Fulma.Extensions
+
+module Inside = GoGoFulma.Inside
+open GoGoFulma.ReactHelpers
 
 let root (model:Model) dispatch= 
-  
-  let makeCard card = 
-    let label = 
-      match card.Item with 
-      | Some item -> (string item)
-      | None -> ""
-    match card.Status with 
-    | CardStatus.Disabled -> 
-      match card.Item with 
-      | Some item -> 
-        match item with 
-        | Nothing -> 
-          Notification.notification [ Notification.Color IsLight ] 
-            [ str "Empty Slot" ]  
-        | _ ->
-          Notification.notification [ Notification.Color IsDark ] 
-            [Heading.h6 [] [str label]]
-//                  [ str (string knob.PreviousValue) ]
-      | None -> failwith "not handled"    
-    
-    | Activated ->
-      Notification.notification [ Notification.Color IsSuccess ] 
-        [Heading.h6 [] [str label]]
-//                  [ str (string knob.PreviousValue) ]  
 
+  let card = 
+    match model.ActiveCard with 
+    | Some card ->
+      let label = 
+        match card.Item with 
+        | Card label -> label
+        | Trap label -> label 
+        | Nothing -> ""
 
-  let cards = 
-    model.Hand
-    |> Seq.map( fun rows -> 
-      let columns = 
-        rows
-        |> Seq.map( fun card ->
-          Column.column [ Column.Props[ OnClick ( fun _ -> (FlipCard card.Pos) |> dispatch)] ] [
-            makeCard card
-          ]
-        )
-        |> Seq.toList
-      
-      Columns.columns [] columns
-    )
-    |> Seq.toList
+      label |> Inside.Str => Inside.Heading.h1  
+    | None -> str "" 
 
-  let header = 
-
-    let stat value name= 
-      Column.column [] [
-        Notification.notification [Notification.Color IsDark] 
-          [ 
-            Heading.h2 [] [ str name] 
-            p [] [ str <| sprintf "%i" value ]
-          ]
-      ]
-        
-    let events = 
-      let makeEvent kind= 
-        Column.column [] [
-          yield 
-            match kind with 
-            | NoEvent ->
-              Notification.notification [Notification.Color IsLight] []
-            | _ -> 
-              let title = string kind 
-              Notification.notification [Notification.Color IsWarning] 
-                [ 
-                  Heading.h3 [] [ str title] 
-                ]
-        ]
-    
-      [
-        for e in model.Events do 
-          yield makeEvent e.Kind
-      ]
-
-    Hero.head [ CustomClass "heroPadding"] 
-      [
-        Columns.columns [] [
-          "Food" |> stat model.Stats.Food
-          "Hull" |> stat model.Stats.Hull
-          "Crew" |> stat model.Stats.Crew
-          "Gold" |> stat model.Stats.Gold
-        ]
-        Columns.columns [] events
-      ]
 
   // TODO handle Midi event to hide notification
   let notification = 
@@ -99,7 +33,6 @@ let root (model:Model) dispatch=
     let title, message =
       if active then  
         match model.NotificationMessage.Title.Value with 
-        | EatCrew msg -> "Ouch!",msg
         | GameOver msg -> "GameOver", msg
       else "",""
     Modal.modal [ Modal.IsActive active; Modal.Props [OnClick hide] ]
@@ -114,8 +47,7 @@ let root (model:Model) dispatch=
 
   Hero.hero [] [
     notification
-    header
-    Hero.body [] cards
+    card => Inside.Hero.Body
   ]
     
   
