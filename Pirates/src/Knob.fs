@@ -5,27 +5,38 @@ open Types
 [<Literal>]
 let KNOBSTARTINDEX = 80
 
+let CONTROL_DECK = 1,8
+let AMBIENT_DECK = 65,80
+let CARD_DECK = 81,104
+
 [<Literal>]
 let KNOB_THRESHOLD = 10
 
 let turn index (value:int option) model = 
 
-  let card = model.Hand.[index]
+  printfn "turn=%A" model.Hand
+
+  let index = index - KNOBSTARTINDEX
 
   // since we can get many model updates we only want to trigger actual test if the 
   // state of the card actually changed
   // Note: hiding a card is free
   let mutable didSomething = false
 
-  let updatedCard = 
+  let updatedCard card= 
     match card.Item with 
-    | Nothing -> card
+    | Nothing -> 
+      failwith "No item ?"
+      card
     | _ -> 
       let turnLeft card = 
         let card = {card with TurnRightCounter=0}
         match card.TurnLeftCounter with 
         | times when times > KNOB_THRESHOLD ->
-          {card with Status=Disabled}
+          if card.Status <> Disabled then 
+            didSomething <- true
+            {card with Status=Disabled}
+          else card
         | _ -> 
           {card with TurnLeftCounter=card.TurnLeftCounter+1}
 
@@ -40,24 +51,21 @@ let turn index (value:int option) model =
         | _ -> 
           {card with TurnRightCounter=card.TurnRightCounter+1}
 
-      let toggle card = 
-        let card = {card with TurnLeftCounter=0}
-        if card.Status = Disabled then 
-          didSomething <- true
-          {card with Status=Activated}
-        else 
-          {card with Status=Disabled}
-
       let updated = 
+        printfn "%i" card.PreviousValue
         match card.PreviousValue,value with 
-        | _, Some v -> 
-          match v with 
-          | 0 -> turnLeft card
-          | 127 -> turnRight card
-
-        | prev, Some newOne when newOne < prev -> turnLeft card                      
-        | prev, Some newOne when newOne > prev -> turnRight card
-        | _, None -> toggle card
+        | _, Some v when v = 0  ->
+           printfn "turn left 0"
+           turnLeft card
+        | _, Some v when v = 127  -> 
+           printfn "turn right 127"
+           turnRight card
+        | prev, Some newOne when newOne < prev -> 
+          printfn "turn left"
+          turnLeft card                      
+        | prev, Some newOne when newOne > prev -> 
+          printfn "turn right"
+          turnRight card
         | _ -> card
       
       match value with 
@@ -66,11 +74,14 @@ let turn index (value:int option) model =
       | None -> 
         updated
 
+  printfn "toto"
   let updatedCards = 
+    printfn "Hand=%A" model.Hand
     model.Hand
     |> List.map( fun card -> 
         if card.Index = index then 
-          updatedCard
+          printfn "updatei %i" index
+          updatedCard card
         else
           card
       )

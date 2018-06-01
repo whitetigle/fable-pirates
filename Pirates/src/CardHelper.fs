@@ -34,7 +34,7 @@ let getActiveCard cards=
     |> List.filter( fun card -> 
       card.Status=Activated
     ) 
-    |> List.head
+    |> List.tryHead
 
 let hasCardActive updatedCards = 
   updatedCards 
@@ -53,7 +53,7 @@ let disableAll model=
 let startingHand max (model:Model) = 
   let rec getMore (inputDeck:Item list) (outputDeck:Item list) =
     match outputDeck.Length with 
-    | x when x < max -> 
+    | x when x <= max -> 
       let index = (Fable.Import.JS.Math.random() * float inputDeck.Length) |> int 
       let found = inputDeck.[index]
       let ouput = outputDeck @ [found]

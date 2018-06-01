@@ -20,7 +20,11 @@ module StateFlow =
 
 let checkCardsInHand (model:Model) = 
   let found = model.Hand |> CardHelper.getActiveCard
-  { model with ActiveCard=Some found}, Cmd.ofMsg (Solve found)
+
+  let command = 
+    if found.IsSome then Cmd.ofMsg (Solve found.Value) else Cmd.none
+  
+  { model with ActiveCard=found}, command
 
 let showMessage title model =
   let notification  = {model.NotificationMessage with Title=title |> Some } 
@@ -134,10 +138,30 @@ let update (msg: Msg) (model: Model) =
           |> StateFlow.goToNextState HideNotificationMessage
         
         | None -> 
-          let updatedModel, didSomething = model |> Knob.turn index value
-          updatedModel 
-          |> StateFlow.logMessage msg
-          |> Logic.nextTurn didSomething
+          match index with 
+          | x when x >= fst Knob.CONTROL_DECK && x <= snd Knob.CONTROL_DECK -> 
+            printfn "Control deck %i" index
+            model 
+            |> StateFlow.logMessage msg
+            |> Logic.nextTurn true
+
+          | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
+            printfn "Ambient deck %i" index
+            model 
+            |> StateFlow.logMessage msg
+            |> Logic.nextTurn true
+
+          | x when x >= fst Knob.CARD_DECK && x <= snd Knob.CARD_DECK -> 
+            printfn "Card deck %i" index
+            let updatedModel, didSomething = model |> Knob.turn index value
+            updatedModel 
+            |> StateFlow.logMessage msg
+            |> Logic.nextTurn didSomething
+          
+          | _ -> 
+            printfn "index %i" index
+            model 
+            |> StateFlow.stopThere
 
       | _ -> 
         let (m, c) = Behringer.update bMsg model.Behringer
