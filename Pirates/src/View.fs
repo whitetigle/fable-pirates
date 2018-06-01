@@ -13,13 +13,32 @@ open GoGoFulma.ReactHelpers
 
 let root (model:Model) dispatch= 
 
-  match model.EndOfGame with 
-  | Some ending -> 
+  match model.Step with 
+  | StartGame -> 
 
     let title, textColor, backColor = 
-      match ending with 
-      | Lost -> "Ah la la ! Vous avez perdu !", "is-dark", IsDanger
-      | Won -> "Bravo !", "is-dark", IsSuccess
+      "Démarrer", "is-dark", IsSuccess
+
+    let card = 
+      div[ ClassName (sprintf "label %s" textColor)] [         
+        title |> Inside.Str
+      ]
+
+    Hero.hero [Hero.Color backColor; Hero.IsFullHeight] [
+      Container.container 
+        [
+          Container.IsFluid
+          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
+          Container.Props[ OnClick (fun _ -> Msg.StartGame |> dispatch ) ]
+        ] 
+        [ card ]
+        => Inside.Hero.Body
+    ]
+
+  | Won -> 
+
+    let title, textColor, backColor = 
+      "Bravo !", "is-dark", IsSuccess
 
     let card = 
       div[ ClassName (sprintf "label %s" textColor)] [         
@@ -37,7 +56,7 @@ let root (model:Model) dispatch=
         => Inside.Hero.Body
     ]
   
-  | None -> 
+  | GameStarted -> 
     let card = 
       match model.ActiveCard with 
       | Some card ->

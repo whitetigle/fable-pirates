@@ -2,9 +2,6 @@ module Types
 
 open Fable.Core
 
-[<Literal>]
-let CARDS_COUNT = 24
-
 type Id = int
 
 type Item = 
@@ -32,7 +29,6 @@ type Card =
 type RenderMsg = Render
 type Msg= 
   | BehringerMsg of Behringer.Msg
-  | FlipCard 
   | HideNotificationMessage
   | GameOver
   | StartGame
@@ -51,36 +47,43 @@ type NotificationMessage =
       Title=GameOver "OOPS"
     }
 
-type EndOfGame = 
+type Step = 
   | Won 
-  | Lost 
+  | StartGame
+  | GameStarted
 
 type Rules = 
   {
     KnobThreshold : int
+    CardsCount:int
+    Wanted:int
   }
   static member Prepare = {
     KnobThreshold=30
+    CardsCount=24
+    Wanted=4
   }
 
 type Model = 
   { 
     Hand:Card list
     Wanted:Id list
+    DoneSoFar:Id list
     ActiveCard:Card option
     Behringer:Behringer.Model 
     NotificationMessage:NotificationMessage option
-    EndOfGame:EndOfGame option
+    Step:Step
     Rules:Rules
   }
   static member Create (bModel:Behringer.Model) = 
     {
       Hand = []
       Wanted=[]
+      DoneSoFar=[]
       ActiveCard=None
       Behringer= bModel
       NotificationMessage=None
-      EndOfGame=None
+      Step=StartGame
       Rules=Rules.Prepare
     }
 

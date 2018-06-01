@@ -39,21 +39,21 @@ let hideMessage model =
 
 module Logic = 
   let nextTurn model =    
-    let updatedModel = 
-       model
     
-    match updatedModel.EndOfGame with 
-    | Some eof -> 
-      { updatedModel with EndOfGame=Some eof}
-      |> StateFlow.stopThere
+    match model.Step with 
+    | StartGame -> 
+      model |> StateFlow.stopThere
+    
+    | Won -> 
+      model |> StateFlow.stopThere
 
-    | None -> 
-      updatedModel |> checkCardsInHand
+    | GameStarted ->
+      model |> checkCardsInHand 
 
 let init _ = 
   let bModel,bCmd = Behringer.init()
   Model.Create bModel,
-  Cmd.batch [ Cmd.map BehringerMsg bCmd; Cmd.ofMsg StartGame]
+  Cmd.batch [ Cmd.map BehringerMsg bCmd; Cmd.ofMsg Msg.ResetGame]
 
 
 let update (msg: Msg) (model: Model) =
@@ -66,46 +66,48 @@ let update (msg: Msg) (model: Model) =
       |> StateFlow.stopThere
 
   | ResetGame ->    
-    { model with EndOfGame=None;ActiveCard=None}
+    { model with Step=StartGame;ActiveCard=None}
       |> StateFlow.logMessage msg
-      |> StateFlow.goToNextState StartGame
+      |> StateFlow.stopThere
+      //|> StateFlow.goToNextState StartGame
 
-  | StartGame ->    
+  | Msg.StartGame ->    
 
-    model
-      |> CardHelper.startingHand CARDS_COUNT
+    { model with Step=GameStarted;ActiveCard=None}
+      |> CardHelper.startingHand model.Rules.CardsCount
       |> CardHelper.shuffleHand 
-      |> CardHelper.prepareWishlist 1
+      |> CardHelper.prepareWishlist (model.Rules.Wanted-1)
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
   
   | Solve card -> 
     
-    let wanted = 
-      model.Wanted
-      |> List.filter( fun id -> id <> card.Index)
+    let isGoodCard = 
+      model.Wanted 
+      |> List.exists ( fun id -> id = card.Index)
+
+    let doneSoFar = 
+      if isGoodCard then 
+        printfn "Found one ! %i" card.Index
+        model.DoneSoFar
+        |> List.filter( fun id -> id <> card.Index)
+      else 
+        printfn "Error !"
+        model.Wanted
     
-    match wanted.IsEmpty with 
+    printfn "Done so far %A" doneSoFar
+    match doneSoFar.IsEmpty with 
     | true -> 
       
-      { model with EndOfGame=Some Won }
+      { model with Step=Won }
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
 
     | false -> 
-      { model with Wanted=wanted }
+      { model with DoneSoFar=doneSoFar }
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
       
-  | FlipCard -> 
-    
-    let updatedCards, didSomething = 
-      model |> CardHelper.flipCard
-    
-    { model with Hand=updatedCards} 
-    |> StateFlow.logMessage msg
-    |> Logic.nextTurn 
-
   | BehringerMsg bMsg ->
       match bMsg with 
       | Behringer.OnKnob (index, value) -> 
@@ -117,42 +119,32 @@ let update (msg: Msg) (model: Model) =
           //|> StateFlow.goToNextState HideNotificationMessage
         
         | None -> 
-          match index with 
-          | x when x >= fst Knob.CONTROL_DECK && x <= snd Knob.CONTROL_DECK -> 
-            printfn "Control deck %i" index
-            model 
-            |> StateFlow.logMessage msg
-            |> Logic.nextTurn 
-
-          | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
-            printfn "Ambient deck %i" index
-            model 
-            |> StateFlow.logMessage msg
-            |> Logic.nextTurn 
-
-          | x when x >= fst Knob.CARD_DECK && x <= snd Knob.CARD_DECK -> 
-            let updatedModel, didSomething = model |> Knob.turn index value model.Rules.KnobThreshold
-
-            printfn "%A%A" model.EndOfGame didSomething
-            match model.EndOfGame, didSomething with 
-            | Some _, true -> 
-
-              model
-              |> StateFlow.logMessage msg
-              |> StateFlow.goToNextState ResetGame
-           
-            | Some _, false -> 
+          match model.Step with 
+          | GameStarted ->
+            match index with 
+            | x when x >= fst Knob.CONTROL_DECK && x <= snd Knob.CONTROL_DECK -> 
+              printfn "Control deck %i" index
               model 
               |> StateFlow.logMessage msg
-              |> StateFlow.stopThere
-            
-            | _ -> 
+              |> Logic.nextTurn 
+
+            | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
+              printfn "Ambient deck %i" index
+              model 
+              |> StateFlow.logMessage msg
+              |> Logic.nextTurn 
+
+            | x when x >= fst Knob.CARD_DECK && x <= snd Knob.CARD_DECK -> 
+              let updatedModel, didSomething = model |> Knob.turn index value model.Rules.KnobThreshold
+
               updatedModel 
               |> StateFlow.logMessage msg
               |> Logic.nextTurn 
           
+            | _ -> 
+              model 
+              |> StateFlow.stopThere
           | _ -> 
-            printfn "index %i" index
             model 
             |> StateFlow.stopThere
 
