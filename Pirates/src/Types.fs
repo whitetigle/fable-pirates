@@ -35,17 +35,13 @@ type Msg=
   | ResetGame
   | Solve of Card
 
-type TitleKind = 
-  | GameOver of string
+type NotificationMessage = 
+  | GoodMove of string
+  | BadMove of string
 
-type NotificationMessage =
-  {
-    Title:TitleKind
-  }
-  static member Default = 
-    {
-      Title=GameOver "OOPS"
-    }
+type MoveKind = 
+  | Good
+  | Bad 
 
 type Step = 
   | Won 
@@ -74,6 +70,7 @@ type Model =
     NotificationMessage:NotificationMessage option
     Step:Step
     Rules:Rules
+    GoodMove:MoveKind option
   }
   static member Create (bModel:Behringer.Model) = 
     {
@@ -85,5 +82,6 @@ type Model =
       NotificationMessage=None
       Step=StartGame
       Rules=Rules.Prepare
+      GoodMove=None
     }
 

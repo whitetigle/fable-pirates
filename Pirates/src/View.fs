@@ -79,8 +79,9 @@ let root (model:Model) dispatch=
         match model.NotificationMessage with 
         | Some msg -> 
           let title, m = 
-            match msg.Title with 
-            | GameOver msg ->  "Game Over", msg
+            match msg with 
+            | GoodMove msg -> "Bien joué !", msg
+            | BadMove msg -> "Zut !", msg
           [
             Heading.h1 [] [ str title]
             p [] [ str m ]
@@ -97,7 +98,13 @@ let root (model:Model) dispatch=
              title
         ]
 
-    Hero.hero [Hero.Color IsLight; Hero.IsFullHeight] [
+    let color = 
+      match model.GoodMove with 
+      | None -> IsLight
+      | Some Bad -> IsDanger 
+      | Some Good -> IsSuccess
+
+    Hero.hero [Hero.Color color; Hero.IsFullHeight] [
       notification model
       Container.container 
         [Container.IsFluid; Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]] 

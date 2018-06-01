@@ -26,10 +26,6 @@ let checkCardsInHand (model:Model) =
   
   { model with ActiveCard=found}, command
 
-let showMessage title model =
-  let notification = Some {Title=title} 
-  { model with NotificationMessage=notification}
-
 let hideMessage model = 
   {
     model with 
@@ -88,14 +84,11 @@ let update (msg: Msg) (model: Model) =
 
     let doneSoFar = 
       if isGoodCard then 
-        printfn "Found one ! %i" card.Index
         model.DoneSoFar
         |> List.filter( fun id -> id <> card.Index)
       else 
-        printfn "Error !"
         model.Wanted
     
-    printfn "Done so far %A" doneSoFar
     match doneSoFar.IsEmpty with 
     | true -> 
       
@@ -104,13 +97,22 @@ let update (msg: Msg) (model: Model) =
       |> StateFlow.stopThere
 
     | false -> 
-      { model with DoneSoFar=doneSoFar }
-      |> StateFlow.logMessage msg
-      |> StateFlow.stopThere
+      if isGoodCard then 
+        { model with DoneSoFar=doneSoFar;GoodMove=Some Good }
+        |> StateFlow.logMessage msg
+        |> StateFlow.stopThere
+      
+      else 
+      
+        { model with DoneSoFar=doneSoFar;GoodMove=Some Bad }
+        |> StateFlow.logMessage msg
+        |> StateFlow.stopThere
       
   | BehringerMsg bMsg ->
       match bMsg with 
       | Behringer.OnKnob (index, value) -> 
+        let model = { model with GoodMove=None }
+        
         match model.NotificationMessage with 
         | Some _ -> 
           model 
