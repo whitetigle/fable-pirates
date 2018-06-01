@@ -14,8 +14,6 @@ let KNOB_THRESHOLD = 10
 
 let turn index (value:int option) model = 
 
-  printfn "turn=%A" model.Hand
-
   let index = index - KNOBSTARTINDEX
 
   // since we can get many model updates we only want to trigger actual test if the 
@@ -26,8 +24,8 @@ let turn index (value:int option) model =
   let updatedCard card= 
     match card.Item with 
     | Nothing -> 
-      failwith "No item ?"
       card
+
     | _ -> 
       let turnLeft card = 
         let card = {card with TurnRightCounter=0}
@@ -55,16 +53,12 @@ let turn index (value:int option) model =
         printfn "%i" card.PreviousValue
         match card.PreviousValue,value with 
         | _, Some v when v = 0  ->
-           printfn "turn left 0"
            turnLeft card
         | _, Some v when v = 127  -> 
-           printfn "turn right 127"
            turnRight card
         | prev, Some newOne when newOne < prev -> 
-          printfn "turn left"
           turnLeft card                      
         | prev, Some newOne when newOne > prev -> 
-          printfn "turn right"
           turnRight card
         | _ -> card
       
@@ -74,18 +68,14 @@ let turn index (value:int option) model =
       | None -> 
         updated
 
-  printfn "toto"
   let updatedCards = 
-    printfn "Hand=%A" model.Hand
     model.Hand
     |> List.map( fun card -> 
         if card.Index = index then 
-          printfn "updatei %i" index
           updatedCard card
         else
-          card
+          { card with Status=Disabled }
       )
-
 
   { model
     with Hand=updatedCards

@@ -6,7 +6,8 @@ open Fable.Core
 let CARDS_COUNT = 24
 
 type Item = 
-  | Trap of string
+  | Repetor of string
+  | Mixator of string
   | Card of string
   | Nothing
 

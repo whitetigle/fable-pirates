@@ -19,8 +19,9 @@ let root (model:Model) dispatch=
       let label = 
         match card.Item with 
         | Card label -> label
-        | Trap label -> label 
+        | Repetor label -> label 
         | Nothing -> ""
+        | _ -> printfn "%A" card.Item; ""
 
       label |> Inside.Str => Inside.Heading.h1  
     | None -> str "" 
