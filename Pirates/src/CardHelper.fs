@@ -61,18 +61,20 @@ let disableAll model=
     {model with Hand = updatedCards}
 
 let startingHand max (model:Model) = 
-  let rec getMore (inputDeck:Item list) (outputDeck:Item list) =
+  let rec getMore (inputDeck:Item list) max (outputDeck:Item list) =
     match outputDeck.Length with 
     | x when x <= max -> 
       let index = (Fable.Import.JS.Math.random() * float inputDeck.Length) |> int 
       let found = inputDeck.[index]
       let ouput = outputDeck @ [found]
       let input = Utils.List.remove index inputDeck
-      getMore input ouput
+      getMore input max ouput
     | _ -> outputDeck
   
+  let items = getMore fullDeck max []
+
   let cards = 
-    getMore fullDeck  []
+    items
     |> List.mapi( fun i item -> 
       {
         Index=i
@@ -83,7 +85,25 @@ let startingHand max (model:Model) =
         Item=item
       }
     )
+  
   {model with Hand=cards}
+
+let prepareWishlist max (model:Model) =
+  let wanted = 
+    let rec select (inputDeck:Card list) max (outputDeck:Id list) =
+      match outputDeck.Length with 
+      | x when x <= max -> 
+        let index = (Fable.Import.JS.Math.random() * float inputDeck.Length) |> int 
+        let found = inputDeck.[index]
+        let ouput = outputDeck @ [found.Index]
+        let input = Utils.List.remove index inputDeck
+        select input max ouput
+      | _ -> outputDeck
+    
+    select model.Hand max []
+
+  {model with Wanted=wanted}
+
 
 let shuffleHand (model:Model) = 
   let updatedCards = 

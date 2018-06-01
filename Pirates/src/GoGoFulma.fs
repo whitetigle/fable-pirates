@@ -221,6 +221,7 @@ module Inside =
     | IsSuccess -> "is-success"
     | IsWarning -> "is-warning"
     | IsDanger -> "is-danger"
+    | _ -> "is-white"
 
   module Hero =
     let FullHeight color elements = Hero.hero [ Hero.Color color; Hero.IsFullHeight ] elements

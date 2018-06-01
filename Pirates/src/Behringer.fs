@@ -107,9 +107,9 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
       model, Cmd.none
 
     | OnMessage data -> 
-        printfn "MIDI message received at timestamp [ %i bytes]" data.Length
-        let status = int data.[0]
-        let command = (int data.[0]) >>> 4
+        //printfn "MIDI message received at timestamp [ %i bytes]" data.Length
+        //let status = int data.[0]
+        //let command = (int data.[0]) >>> 4
         let channel = (int data.[1]) &&& 0x7F
         let velocity = (int data.[2]) &&& 0x7F
 
@@ -126,8 +126,6 @@ let update (msg:Msg) (model:Model) : Model*Cmd<Msg> =
         { model with Counter=model.Counter+1}, Cmd.ofMsg <| OnKnob (channel, Some velocity)
 
     | InputSelected id ->
-
-        printfn "%s" id
 
         let onMidiMessageSub (dispatch: Dispatch<Msg>) = 
             let onMidiMessage (ev: WebMIDI.IMIDIMessageEvent) =

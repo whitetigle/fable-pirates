@@ -9,10 +9,7 @@ let CONTROL_DECK = 1,8
 let AMBIENT_DECK = 65,80
 let CARD_DECK = 81,104
 
-[<Literal>]
-let KNOB_THRESHOLD = 10
-
-let turn index (value:int option) model = 
+let turn index (value:int option) knb model = 
 
   let index = index - KNOBSTARTINDEX
 
@@ -30,7 +27,7 @@ let turn index (value:int option) model =
       let turnLeft card = 
         let card = {card with TurnRightCounter=0}
         match card.TurnLeftCounter with 
-        | times when times > KNOB_THRESHOLD ->
+        | times when times > knb ->
           if card.Status <> Disabled then 
             didSomething <- true
             {card with Status=Disabled}
@@ -41,7 +38,7 @@ let turn index (value:int option) model =
       let turnRight card = 
         let card = {card with TurnLeftCounter=0}
         match card.TurnRightCounter with 
-        | times when times > KNOB_THRESHOLD ->
+        | times when times > knb ->
           if card.Status = Disabled then 
             didSomething <- true
             {card with Status=Activated}
@@ -50,7 +47,7 @@ let turn index (value:int option) model =
           {card with TurnRightCounter=card.TurnRightCounter+1}
 
       let updated = 
-        printfn "%i" card.PreviousValue
+
         match card.PreviousValue,value with 
         | _, Some v when v = 0  ->
            turnLeft card
@@ -74,7 +71,7 @@ let turn index (value:int option) model =
         if card.Index = index then 
           updatedCard card
         else
-          { card with Status=Disabled }
+          { card with Status=Disabled; PreviousValue=0;TurnRightCounter=0;TurnLeftCounter=0 }
       )
 
   { model

@@ -13,42 +13,77 @@ open GoGoFulma.ReactHelpers
 
 let root (model:Model) dispatch= 
 
-  let card = 
-    match model.ActiveCard with 
-    | Some card ->
-      let label = 
-        match card.Item with 
-        | Card label -> label
-        | Repetor label -> label 
-        | Nothing -> ""
-        | _ -> printfn "%A" card.Item; ""
+  match model.EndOfGame with 
+  | Some ending -> 
 
-      label |> Inside.Str => Inside.Heading.h1  
-    | None -> str "" 
+    let title, textColor, backColor = 
+      match ending with 
+      | Lost -> "Ah la la ! Vous avez perdu !", "is-dark", IsDanger
+      | Won -> "Bravo !", "is-dark", IsSuccess
 
-
-  // TODO handle Midi event to hide notification
-  let notification = 
-    let active =  model.NotificationMessage.Title.IsSome
-    let hide _ = HideNotificationMessage |> dispatch
-    let title, message =
-      if active then  
-        match model.NotificationMessage.Title.Value with 
-        | GameOver msg -> "GameOver", msg
-      else "",""
-    Modal.modal [ Modal.IsActive active; Modal.Props [OnClick hide] ]
-      [
-         Modal.background [ Props [ OnClick hide ] ] [ ]
-         Notification.notification [ Notification.Color IsInfo]
-           [
-             Heading.h1 [] [ str title]
-             p [] [ str message ]
-           ]
+    let card = 
+      div[ ClassName (sprintf "label %s" textColor)] [         
+        title |> Inside.Str
       ]
 
-  Hero.hero [] [
-    notification
-    card => Inside.Hero.Body
-  ]
-    
+    Hero.hero [Hero.Color backColor; Hero.IsFullHeight] [
+      Container.container 
+        [
+          Container.IsFluid
+          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
+          Container.Props[ OnClick (fun _ -> ResetGame |> dispatch ) ]
+        ] 
+        [ card ]
+        => Inside.Hero.Body
+    ]
   
+  | None -> 
+    let card = 
+      match model.ActiveCard with 
+      | Some card ->
+        let label = 
+          match card.Item with 
+          | Card label -> label
+          | Repetor label -> label 
+          | Nothing -> ""
+          | _ -> printfn "%A" card.Item; ""
+
+        div[ ClassName "label is-dark"] [         
+          label |> Inside.Str
+        ]
+
+      | None -> str "" 
+
+    // TODO handle Midi event to hide notification
+    let notification model= 
+      let title, isActive= 
+        match model.NotificationMessage with 
+        | Some msg -> 
+          let title, m = 
+            match msg.Title with 
+            | GameOver msg ->  "Game Over", msg
+          [
+            Heading.h1 [] [ str title]
+            p [] [ str m ]
+          ]
+          , true
+        | None -> [str ""], false
+
+      let hide _ = HideNotificationMessage |> dispatch
+
+      Modal.modal [ Modal.IsActive isActive; Modal.Props [OnClick hide] ]
+        [
+           Modal.background [ Props [ OnClick hide ] ] [ ]
+           Notification.notification [ Notification.Color IsInfo]
+             title
+        ]
+
+    Hero.hero [Hero.Color IsLight; Hero.IsFullHeight] [
+      notification model
+      Container.container 
+        [Container.IsFluid; Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]] 
+        [ card ]
+        => Inside.Hero.Body
+    ]
+      
+    

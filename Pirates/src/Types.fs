@@ -5,9 +5,14 @@ open Fable.Core
 [<Literal>]
 let CARDS_COUNT = 24
 
+type Id = int
+
 type Item = 
-  | Repetor of string
-  | Mixator of string
+  | Repetor of string // Repeats 5 times the same object
+  | Mixator of string // shuffles everything
+  | Colorator of string // Colorator : colors texts
+  | Backgroundator of string // Colorator : colors background
+  | Knobator of string // changes knob response time
   | Card of string
   | Nothing
 
@@ -31,6 +36,7 @@ type Msg=
   | HideNotificationMessage
   | GameOver
   | StartGame
+  | ResetGame
   | Solve of Card
 
 type TitleKind = 
@@ -38,27 +44,43 @@ type TitleKind =
 
 type NotificationMessage =
   {
-    Title:TitleKind option
+    Title:TitleKind
   }
   static member Default = 
     {
-      Title=None
+      Title=GameOver "OOPS"
     }
+
+type EndOfGame = 
+  | Won 
+  | Lost 
+
+type Rules = 
+  {
+    KnobThreshold : int
+  }
+  static member Prepare = {
+    KnobThreshold=30
+  }
 
 type Model = 
   { 
     Hand:Card list
+    Wanted:Id list
     ActiveCard:Card option
     Behringer:Behringer.Model 
-    NotificationMessage:NotificationMessage
-    GameOver:bool
+    NotificationMessage:NotificationMessage option
+    EndOfGame:EndOfGame option
+    Rules:Rules
   }
   static member Create (bModel:Behringer.Model) = 
     {
       Hand = []
+      Wanted=[]
       ActiveCard=None
       Behringer= bModel
-      NotificationMessage=NotificationMessage.Default
-      GameOver=false
+      NotificationMessage=None
+      EndOfGame=None
+      Rules=Rules.Prepare
     }
 
