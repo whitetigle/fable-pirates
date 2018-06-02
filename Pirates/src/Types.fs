@@ -61,7 +61,7 @@ type Rules =
   static member Prepare = {
     KnobThreshold=30
     CardsCount=24
-    Wanted=9
+    Wanted=2
     TrapCount=2
     KnobThresholdIncrease=40
   }

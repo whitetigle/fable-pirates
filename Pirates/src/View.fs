@@ -6,6 +6,7 @@ open Fable.Core.JsInterop
 open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fulma
+open Fulma.FontAwesome
 open Fulma.Extensions
 
 module Inside = GoGoFulma.Inside
@@ -57,6 +58,30 @@ let root (model:Model) dispatch=
     ]
   
   | GameStarted -> 
+
+    let head = 
+      let stars = 
+        let l = model.Rules.Wanted - 1
+        let foundStars = model.DoneSoFar.Length
+        [0..l] 
+        |> List.mapi( fun i _ ->
+          if i < foundStars then  
+            Icon.faIcon [ Icon.CustomClass "BigStar" ] [ Fa.icon Fa.I.StarO ]
+            => Inside.ColumnWithSize.Is1
+          else 
+            Icon.faIcon [ Icon.CustomClass "BigStar"  ] [ Fa.icon Fa.I.Star ]
+            => Inside.ColumnWithSize.Is1
+        ) |> Inside.Columns
+
+
+      Hero.head [] [
+         [ 
+           [] |> Inside.Column
+           stars => Inside.ColumnWithSize.Is3
+         ]          
+         |> Inside.Columns
+      ]
+
     let card = 
       match model.ActiveCard with 
       | Some card ->
@@ -107,6 +132,7 @@ let root (model:Model) dispatch=
 
     Hero.hero [Hero.Color color; Hero.IsFullHeight] [
       notification model
+      head
       Container.container 
         [Container.IsFluid; Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]] 
         [ card ]

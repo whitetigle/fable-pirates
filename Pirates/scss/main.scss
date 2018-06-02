@@ -110,3 +110,11 @@ body {
   $map: (576: 50, 768: 60, 992: 80,1280:140,1900:250);
   font-size: least-squares-fit($map);  
 }
+
+
+.BigStar {
+  padding-top: 2em;
+  i {
+    font-size: 2em;
+  } 
+}
