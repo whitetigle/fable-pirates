@@ -5,6 +5,9 @@ open Types
 [<Literal>]
 let KNOBSTARTINDEX = 80
 
+[<Literal>]
+let AMBIENT_START = 64
+
 let CONTROL_DECK = 1,8
 let AMBIENT_DECK = 65,80
 let CARD_DECK = 81,104
@@ -14,10 +17,12 @@ let turn index (value:int option) (model:Model) =
   let index = index - KNOBSTARTINDEX
   let knb = model.Rules.KnobThreshold
 
+  (*
   match model.Sounds with 
   | Some sounds -> 
     sounds.Knob.play() |> ignore
   | None -> printfn "no sound"
+  *)
   
   let updatedCard card= 
     match card.Item with 

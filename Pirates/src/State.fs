@@ -85,7 +85,7 @@ let update (msg: Msg) (model: Model) =
     | Mixator _ -> 
 
       { model with GoodMove=Some Trap }
-      |> CardHelper.shuffleHand
+      |> CardHelper.reverseHand
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere   
 
@@ -99,6 +99,13 @@ let update (msg: Msg) (model: Model) =
         {model.Rules with KnobThreshold=newThreshold}
 
       { model with GoodMove=Some Trap;Rules = updatedRules }
+      |> StateFlow.logMessage msg
+      |> StateFlow.stopThere   
+
+    | Wheel _ -> 
+
+      { model with GoodMove=Some Trap }
+      |> CardHelper.rotateHand
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere   
 
@@ -143,7 +150,7 @@ let update (msg: Msg) (model: Model) =
   | BehringerMsg bMsg ->
       match bMsg with 
       | Behringer.OnKnob (index, value) ->
-
+        
         match model.NotificationMessage with 
         | Some _ -> 
           { model with GoodMove=None } 
@@ -153,6 +160,21 @@ let update (msg: Msg) (model: Model) =
         
         | None -> 
           match model.Step with 
+          | StartGame ->
+
+            match index with             
+            | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
+              
+              let difficulty = index-Knob.AMBIENT_START
+              printfn "difficulty %i" difficulty
+              let rules = {model.Rules with Wanted=difficulty}
+              { model with Rules = rules }
+              |> StateFlow.goToNextState Msg.StartGame
+            
+            | _ -> 
+              model 
+              |> StateFlow.stopThere
+
           | GameStarted ->
 
             let canCheck = 
@@ -161,7 +183,6 @@ let update (msg: Msg) (model: Model) =
                 activeCard.Index <> (index- Knob.KNOBSTARTINDEX)
               | None -> true
 
-            printfn "activeCard %A %b" model.ActiveCard canCheck
             if not canCheck then 
               model 
               |> StateFlow.stopThere

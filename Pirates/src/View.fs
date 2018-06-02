@@ -18,7 +18,7 @@ let root (model:Model) dispatch=
   | StartGame -> 
 
     let title, textColor, backColor = 
-      "Démarrer", "is-dark", IsSuccess
+      "Démarrer", "has-text-grey", IsDark
 
     let card = 
       div[ ClassName (sprintf "label %s" textColor)] [         
@@ -39,7 +39,7 @@ let root (model:Model) dispatch=
   | Won -> 
 
     let title, textColor, backColor = 
-      "Bravo !", "is-dark", IsSuccess
+      "Bravo !", "has-text-dark", IsSuccess
 
     let card = 
       div[ ClassName (sprintf "label %s" textColor)] [         
@@ -99,6 +99,7 @@ let root (model:Model) dispatch=
           | Card label -> label, "has-text-dark"
           | Mixator label -> label, "has-text-danger" 
           | Knobator label -> label, "has-text-danger" 
+          | Wheel label -> label, "has-text-danger" 
           | Nothing -> "", "has-text-dark"
 
         div[ ClassName (sprintf "label %s" color)] [         
@@ -134,7 +135,7 @@ let root (model:Model) dispatch=
 
     let color = 
       match model.GoodMove with 
-      | None -> IsLight
+      | None -> IsDark
       | Some Bad -> IsDanger 
       | Some Good -> IsSuccess
       | Some Trap -> IsDark

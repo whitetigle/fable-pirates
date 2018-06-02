@@ -8,6 +8,7 @@ type Id = int
 type Item = 
   | Mixator of string // shuffles everything
   | Knobator of string // changes knob response time
+  | Wheel of string // 
   | Card of string
   | Nothing
 
@@ -57,13 +58,15 @@ type Rules =
     Wanted:int
     TrapCount:int
     KnobThresholdIncrease:int
+    Spin:int
   }
   static member Prepare = {
     KnobThreshold=30
     CardsCount=24
-    Wanted=9
-    TrapCount=2
-    KnobThresholdIncrease=40
+    Wanted=7
+    TrapCount=3
+    KnobThresholdIncrease=30
+    Spin=1
   }
 
 type Model = 

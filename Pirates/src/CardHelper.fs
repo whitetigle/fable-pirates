@@ -99,6 +99,33 @@ let prepareWishlist max (model:Model) =
 
   {model with Wanted=wanted;DoneSoFar=wanted}
 
+let reverseHand (model:Model) = 
+  let updatedCards = 
+    model.Hand 
+    |> List.rev
+    |> List.map( fun current -> 
+      {current with Status=Disabled;Index=model.Rules.CardsCount-current.Index}
+    )
+  {model with Hand = updatedCards}    
+
+// source: http://www.nutsaboutcoding.com/?p=321
+let rotateHand (model:Model) = 
+  let spinWheel numTurns (wheel:Card list) =
+      wheel 
+      |> List.map( fun cur -> cur.Index ) 
+      |> List.permute( fun cur -> (cur + numTurns) % wheel.Length )
+
+  let updatedCards = 
+    let newOrder = 
+      model.Hand 
+      |> spinWheel model.Rules.Spin
+    
+    model.Hand
+    |> List.mapi( fun i current -> 
+      {current with Status=Disabled;Index=newOrder.[i]}
+    )
+  {model with Hand = updatedCards}    
+
 
 let shuffleHand (model:Model) = 
   let updatedCards = 
@@ -130,17 +157,15 @@ let swap (model:Model) =
     |> List.map( fun current -> 
       {current with Status=Disabled}
     )
-  printfn "updatedCards %A" model.Hand
-
   {model with Hand = updatedCards}    
 
 let addTraps (model:Model) =
   
   let indexes = 
-    [
-      for i in 0..model.Rules.TrapCount do
-        yield (Fable.Import.JS.Math.random() * float model.Hand.Length) |> int 
-    ]
+    [ 0..model.Rules.TrapCount-1]
+    |> List.map( fun _ -> 
+        (Fable.Import.JS.Math.random() * float model.Hand.Length) |> int 
+    )
 
   let hand = 
     model.Hand
@@ -149,9 +174,10 @@ let addTraps (model:Model) =
         let rand = Fable.Import.JS.Math.random()
         let trap = 
           match rand with 
-          | x when x >= 0. && x < 0.2 -> Mixator "Le troublant Mixator !"
-          | _ -> Knobator "L' Elongator !"
-
+          | x when x >= 0. && x < 0.2 -> Mixator "Thermomixé !!"
+          | x when x >= 0.2 && x < 0.5 -> Wheel "Roue Infernale !!"
+          //| x when x >= 0.5 && x < 0.7 -> Wheel "Roue Infernale !!"
+          | _ -> Knobator "Tourne Boulé !!"
         {card with Item=trap}
       else 
         card
