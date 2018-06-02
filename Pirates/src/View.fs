@@ -60,8 +60,17 @@ let root (model:Model) dispatch=
   | GameStarted -> 
 
     let head = 
+      let l = model.Rules.Wanted - 1
+      let container = 
+        match l with
+        | x when x < 5 -> 
+          Inside.ColumnWithSize.Is11
+        | x when x < 9 -> 
+          Inside.ColumnWithSize.Is9
+        |_ -> 
+          Inside.ColumnWithSize.Is7
+        
       let stars = 
-        let l = model.Rules.Wanted - 1
         let foundStars = model.DoneSoFar.Length
         [0..l] 
         |> List.mapi( fun i _ ->
@@ -76,7 +85,7 @@ let root (model:Model) dispatch=
 
       Hero.head [] [
          [ 
-           [] |> Inside.Column
+           [] |> container
            stars => Inside.ColumnWithSize.Is3
          ]          
          |> Inside.Columns
