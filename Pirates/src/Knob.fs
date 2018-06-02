@@ -55,7 +55,7 @@ let turn index (value:int option) (model:Model) =
         match card.PreviousValue,value with 
         | _, Some v when v = 0  ->
            turnLeft card
-        | _, Some v when v = 127  -> 
+        | _, Some v when v >= 125  -> 
            turnRight card
         | prev, Some newOne when newOne < prev -> 
           turnLeft card                      

@@ -15,29 +15,7 @@ open GoGoFulma.ReactHelpers
 let root (model:Model) dispatch= 
 
   match model.Step with 
-  
-  (*
-  | StartGame -> 
 
-    let title, textColor, backColor = 
-      "L'étrange Armoire du Professeur Esclottes...'", "has-text-light", IsBlack
-
-    let card = 
-      div[ ClassName (sprintf "label %s" textColor)] [         
-        title |> Inside.Str
-      ]
-
-    Hero.hero [Hero.Color backColor; Hero.IsFullHeight] [
-      Container.container 
-        [
-          Container.IsFluid
-          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
-          Container.Props[ OnClick (fun _ -> Msg.StartGame |> dispatch ) ]
-        ] 
-        [ card ]
-        => Inside.Hero.Body
-    ]
-*)
   | StartGame -> 
 
     Hero.hero [Hero.Color IsLight; Hero.IsFullHeight] [
@@ -45,7 +23,6 @@ let root (model:Model) dispatch=
         [
           Container.IsFluid
           Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
-          Container.Props[ OnClick (fun _ -> Msg.StartGame |> dispatch ) ]
         ] 
         [ 
            "Le Professeur Esclottes a perdu la mémoire !" |> Inside.Str => Inside.Heading.h1
@@ -70,8 +47,7 @@ let root (model:Model) dispatch=
       Container.container 
         [
           Container.IsFluid
-          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
-          Container.Props[ OnClick (fun _ -> ResetGame |> dispatch ) ]
+          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]          
         ] 
         [ 
           card 
@@ -135,31 +111,6 @@ let root (model:Model) dispatch=
 
       | None -> str "" 
 
-    // TODO handle Midi event to hide notification
-    let notification model= 
-      let title, isActive= 
-        match model.NotificationMessage with 
-        | Some msg -> 
-          let title, m = 
-            match msg with 
-            | GoodMove msg -> "Bien joué !", msg
-            | BadMove msg -> "Zut !", msg
-          [
-            Heading.h1 [] [ str title]
-            p [] [ str m ]
-          ]
-          , true
-        | None -> [str ""], false
-
-      let hide _ = HideNotificationMessage |> dispatch
-
-      Modal.modal [ Modal.IsActive isActive; Modal.Props [OnClick hide] ]
-        [
-           Modal.background [ Props [ OnClick hide ] ] [ ]
-           Notification.notification [ Notification.Color IsInfo]
-             title
-        ]
-
     let color = 
       match model.GoodMove with 
       | None -> IsDark
@@ -168,7 +119,6 @@ let root (model:Model) dispatch=
       | Some Trap -> IsDark
 
     Hero.hero [Hero.Color color; Hero.IsFullHeight] [
-      notification model
       head
       Container.container 
         [Container.IsFluid; Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]] 

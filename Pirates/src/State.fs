@@ -229,6 +229,18 @@ let update (msg: Msg) (model: Model) =
               model 
               |> StateFlow.stopThere
 
+          | Won ->
+
+            match index with             
+            | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
+              
+              model
+              |> StateFlow.goToNextState Msg.ResetGame
+            
+            | _ -> 
+              model 
+              |> StateFlow.stopThere
+
           | GameStarted ->
 
             let canCheck = 

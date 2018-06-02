@@ -173,11 +173,18 @@ let addTraps (model:Model) =
       if indexes |> List.exists( fun id -> card.Index = id ) then 
         let rand = Fable.Import.JS.Math.random()
         let trap = 
-          match rand with 
-          | x when x >= 0. && x < 0.2 -> Mixator "Thermomixé !!"
-          | x when x >= 0.2 && x < 0.5 -> Wheel "Roue Infernale !!"
-          //| x when x >= 0.5 && x < 0.7 -> Wheel "Roue Infernale !!"
-          | _ -> Knobator "Tourne Boulé !!"
+          match model.Rules.Wanted with 
+          | w when w <= 4 -> 
+            Knobator "Tourne Boulé !!"
+          | w when w <= 8 -> 
+            match rand with 
+            | x when x >= 0. && x < 0.2 -> Wheel "Roue Infernale !!"
+            | _ -> Knobator "Tourne Boulé !!"
+          | _ -> 
+            match rand with 
+            | x when x >= 0. && x < 0.2 -> Mixator "Thermomixé !!"
+            | x when x >= 0.2 && x < 0.5 -> Wheel "Roue Infernale !!"
+            | _ -> Knobator "Tourne Boulé !!"
         {card with Item=trap}
       else 
         card

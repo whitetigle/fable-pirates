@@ -46,7 +46,6 @@ type Step =
   | Won 
   | StartGame
   | GameStarted
-  | ShowRules
 
 type Sounds = {
   Knob:Howl
@@ -71,8 +70,8 @@ type Rules =
     KnobThreshold=30
     CardsCount=24
     Wanted=7
-    TrapCount=3
-    KnobThresholdIncrease=30
+    TrapCount=2
+    KnobThresholdIncrease=20
     Spin=1
   }
 
