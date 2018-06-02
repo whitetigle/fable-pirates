@@ -108,3 +108,53 @@ let shuffleHand (model:Model) =
       {current with Status=Disabled}
     )
   {model with Hand = updatedCards}    
+
+let swap (model:Model) = 
+ 
+  let updatedCards = 
+    let getRandom() = 
+      (Fable.Import.JS.Math.random() * float model.Hand.Length) |> int 
+
+    let x,y= getRandom(), getRandom()
+    let card1,card2 = model.Hand.[x], model.Hand.[y]
+    
+    model.Hand 
+    |> List.map( fun card -> 
+      if card.Index=card1.Index then 
+        card2
+      else if card.Index = card2.Index then 
+        card1
+      else 
+        card
+    )
+    |> List.map( fun current -> 
+      {current with Status=Disabled}
+    )
+  printfn "updatedCards %A" model.Hand
+
+  {model with Hand = updatedCards}    
+
+let addTraps (model:Model) =
+  
+  let indexes = 
+    [
+      for i in 0..model.Rules.TrapCount do
+        yield (Fable.Import.JS.Math.random() * float model.Hand.Length) |> int 
+    ]
+
+  let hand = 
+    model.Hand
+    |> List.map( fun card -> 
+      if indexes |> List.exists( fun id -> card.Index = id ) then 
+        let rand = Fable.Import.JS.Math.random()
+        let trap = 
+          match rand with 
+          | x when x >= 0. && x < 0.2 -> Mixator "Le troublant Mixator !"
+          | _ -> Knobator "L' Elongator !"
+
+        {card with Item=trap}
+      else 
+        card
+    )
+
+  {model with Hand=hand}  

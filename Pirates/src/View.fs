@@ -60,14 +60,14 @@ let root (model:Model) dispatch=
     let card = 
       match model.ActiveCard with 
       | Some card ->
-        let label = 
+        let label, color = 
           match card.Item with 
-          | Card label -> label
-          | Repetor label -> label 
-          | Nothing -> ""
-          | _ -> printfn "%A" card.Item; ""
+          | Card label -> label, "has-text-dark"
+          | Mixator label -> label, "has-text-danger" 
+          | Knobator label -> label, "has-text-danger" 
+          | Nothing -> "", "has-text-dark"
 
-        div[ ClassName "label is-dark"] [         
+        div[ ClassName (sprintf "label %s" color)] [         
           label |> Inside.Str
         ]
 
@@ -103,6 +103,7 @@ let root (model:Model) dispatch=
       | None -> IsLight
       | Some Bad -> IsDanger 
       | Some Good -> IsSuccess
+      | Some Trap -> IsDark
 
     Hero.hero [Hero.Color color; Hero.IsFullHeight] [
       notification model

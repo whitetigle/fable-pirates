@@ -6,6 +6,10 @@
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@types/animejs/-/animejs-2.0.0.tgz#9163f06aba47595b99951d5560c10e78223f0e20"
 
+"@types/howler@^2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@types/howler/-/howler-2.0.5.tgz#eb5eb99b943fe423abe3ca713163ed911e2a0d76"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -2404,6 +2408,10 @@ home-or-tmp@^2.0.0:
 hosted-git-info@^2.1.4:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.5.0.tgz#6d60e34b3abbc8313062c3b798ef8d901a07af3c"
+
+howler@^2.0.12:
+  version "2.0.12"
+  resolved "https://registry.yarnpkg.com/howler/-/howler-2.0.12.tgz#4b0695fadb2448f9b31ec50c4e327707723d9ed3"
 
 hpack.js@^2.1.6:
   version "2.1.6"

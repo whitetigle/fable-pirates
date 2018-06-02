@@ -1,14 +1,12 @@
 module Types
 
 open Fable.Core
+open Fable.Import.Howler
 
 type Id = int
 
 type Item = 
-  | Repetor of string // Repeats 5 times the same object
   | Mixator of string // shuffles everything
-  | Colorator of string // Colorator : colors texts
-  | Backgroundator of string // Colorator : colors background
   | Knobator of string // changes knob response time
   | Card of string
   | Nothing
@@ -30,7 +28,6 @@ type RenderMsg = Render
 type Msg= 
   | BehringerMsg of Behringer.Msg
   | HideNotificationMessage
-  | GameOver
   | StartGame
   | ResetGame
   | Solve of Card
@@ -42,22 +39,31 @@ type NotificationMessage =
 type MoveKind = 
   | Good
   | Bad 
+  | Trap
 
 type Step = 
   | Won 
   | StartGame
   | GameStarted
 
+type Sounds = {
+  Knob:Howl
+}
+
 type Rules = 
   {
     KnobThreshold : int
     CardsCount:int
     Wanted:int
+    TrapCount:int
+    KnobThresholdIncrease:int
   }
   static member Prepare = {
     KnobThreshold=30
     CardsCount=24
-    Wanted=4
+    Wanted=9
+    TrapCount=2
+    KnobThresholdIncrease=40
   }
 
 type Model = 
@@ -71,6 +77,7 @@ type Model =
     Step:Step
     Rules:Rules
     GoodMove:MoveKind option
+    Sounds:Sounds option
   }
   static member Create (bModel:Behringer.Model) = 
     {
@@ -83,5 +90,6 @@ type Model =
       Step=StartGame
       Rules=Rules.Prepare
       GoodMove=None
+      Sounds=None
     }
 

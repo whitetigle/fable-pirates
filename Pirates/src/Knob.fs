@@ -9,15 +9,16 @@ let CONTROL_DECK = 1,8
 let AMBIENT_DECK = 65,80
 let CARD_DECK = 81,104
 
-let turn index (value:int option) knb model = 
+let turn index (value:int option) (model:Model) = 
 
   let index = index - KNOBSTARTINDEX
+  let knb = model.Rules.KnobThreshold
 
-  // since we can get many model updates we only want to trigger actual test if the 
-  // state of the card actually changed
-  // Note: hiding a card is free
-  let mutable didSomething = false
-
+  match model.Sounds with 
+  | Some sounds -> 
+    sounds.Knob.play() |> ignore
+  | None -> printfn "no sound"
+  
   let updatedCard card= 
     match card.Item with 
     | Nothing -> 
@@ -29,7 +30,6 @@ let turn index (value:int option) knb model =
         match card.TurnLeftCounter with 
         | times when times > knb ->
           if card.Status <> Disabled then 
-            didSomething <- true
             {card with Status=Disabled}
           else card
         | _ -> 
@@ -40,7 +40,6 @@ let turn index (value:int option) knb model =
         match card.TurnRightCounter with 
         | times when times > knb ->
           if card.Status = Disabled then 
-            didSomething <- true
             {card with Status=Activated}
           else card
         | _ -> 
@@ -76,4 +75,5 @@ let turn index (value:int option) knb model =
 
   { model
     with Hand=updatedCards
-  }, didSomething
+  }
+  
