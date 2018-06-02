@@ -46,9 +46,16 @@ type Step =
   | Won 
   | StartGame
   | GameStarted
+  | ShowRules
 
 type Sounds = {
   Knob:Howl
+  Good:Howl
+  Bad:Howl
+  Trap:Howl
+  GameTrack:Howl
+  MenuTrack:Howl
+  Win:Howl
 }
 
 type Rules = 

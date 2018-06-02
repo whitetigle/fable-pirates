@@ -15,10 +15,12 @@ open GoGoFulma.ReactHelpers
 let root (model:Model) dispatch= 
 
   match model.Step with 
+  
+  (*
   | StartGame -> 
 
     let title, textColor, backColor = 
-      "Démarrer", "has-text-grey", IsDark
+      "L'étrange Armoire du Professeur Esclottes...'", "has-text-light", IsBlack
 
     let card = 
       div[ ClassName (sprintf "label %s" textColor)] [         
@@ -35,11 +37,29 @@ let root (model:Model) dispatch=
         [ card ]
         => Inside.Hero.Body
     ]
+*)
+  | StartGame -> 
+
+    Hero.hero [Hero.Color IsLight; Hero.IsFullHeight] [
+      Container.container 
+        [
+          Container.IsFluid
+          Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
+          Container.Props[ OnClick (fun _ -> Msg.StartGame |> dispatch ) ]
+        ] 
+        [ 
+           "Le Professeur Esclottes a perdu la mémoire !" |> Inside.Str => Inside.Heading.h1
+           "Aidez-le à retrouver les objets perdus dans son armoire !" |> Inside.Str => Inside.Heading.h2
+           "Tournez les manivelles pour ouvrir les tiroirs !" |> Inside.Str => Inside.Heading.h3
+           "Attention... Des pièges se cachent dans le noir.." |> Inside.Str => Inside.Heading.h4
+        ]
+        => Inside.Hero.Body
+    ]    
 
   | Won -> 
 
     let title, textColor, backColor = 
-      "Bravo !", "has-text-dark", IsSuccess
+      "Gagné !", "has-text-success", IsLight
 
     let card = 
       div[ ClassName (sprintf "label %s" textColor)] [         
@@ -53,7 +73,14 @@ let root (model:Model) dispatch=
           Container.Modifiers [Modifier.TextAlignment (Screen.All, TextAlignment.Centered)]
           Container.Props[ OnClick (fun _ -> ResetGame |> dispatch ) ]
         ] 
-        [ card ]
+        [ 
+          card 
+          "Vous avez trouvé tous les objets dans l'armoire !" |> Inside.Str => Inside.Heading.h1
+          "Le Professeur vous remercie !" |> Inside.Str => Inside.Heading.h2
+          "Il vous prie de ne pas lui en vouloir !" |> Inside.Str => Inside.Heading.h3
+          "La prochaine fois il rangera mieux ses tiroirs !" |> Inside.Str => Inside.Heading.h3
+          "À bientôt et Au revoir ! " |> Inside.Str => Inside.Heading.h4
+        ]
         => Inside.Hero.Body
     ]
   
@@ -64,7 +91,7 @@ let root (model:Model) dispatch=
       let container = 
         match l with
         | x when x < 5 -> 
-          Inside.ColumnWithSize.Is11
+          Inside.ColumnWithSize.Is9
         | x when x < 9 -> 
           Inside.ColumnWithSize.Is9
         |_ -> 

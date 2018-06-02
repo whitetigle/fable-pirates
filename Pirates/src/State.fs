@@ -34,6 +34,53 @@ let hideMessage model =
       NotificationMessage = None 
   }
 
+module Sound =
+
+  module Play = 
+    let Trap model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.Trap.play() |> ignore
+        model
+      | None -> model
+
+    let Good model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.Good.play() |> ignore
+        model
+      | None -> model
+
+    let Bad model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.Bad.play() |> ignore
+        model
+      | None -> model
+
+    let Win model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.Win.play() |> ignore
+        model
+      | None -> model
+
+    let GameTrack model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.GameTrack.play() |> ignore
+        model
+      | None -> model
+
+  module Stop = 
+
+    let GameTrack model = 
+      match model.Sounds with 
+      | Some sounds ->
+        sounds.GameTrack.stop() |> ignore
+        model
+      | None -> model
+  
 
 module Logic = 
   let nextTurn model =    
@@ -66,12 +113,14 @@ let update (msg: Msg) (model: Model) =
 
   | ResetGame ->    
     { model with Step=StartGame;ActiveCard=None}
+      |> Sound.Play.GameTrack
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
 
   | Msg.StartGame ->    
 
     { model with Step=GameStarted;ActiveCard=None}
+      |> Sound.Stop.GameTrack
       |> CardHelper.startingHand model.Rules.CardsCount
       |> CardHelper.shuffleHand 
       |> CardHelper.prepareWishlist (model.Rules.Wanted-1)
@@ -85,6 +134,7 @@ let update (msg: Msg) (model: Model) =
     | Mixator _ -> 
 
       { model with GoodMove=Some Trap }
+      |> Sound.Play.Trap
       |> CardHelper.reverseHand
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere   
@@ -99,13 +149,15 @@ let update (msg: Msg) (model: Model) =
         {model.Rules with KnobThreshold=newThreshold}
 
       { model with GoodMove=Some Trap;Rules = updatedRules }
+      |> Sound.Play.Trap
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere   
 
     | Wheel _ -> 
-
+      
       { model with GoodMove=Some Trap }
       |> CardHelper.rotateHand
+      |> Sound.Play.Trap
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere   
 
@@ -125,18 +177,21 @@ let update (msg: Msg) (model: Model) =
       | true -> 
         
         { model with Step=Won }
+        |> Sound.Play.Win
         |> StateFlow.logMessage msg
         |> StateFlow.stopThere
 
       | false -> 
         if isGoodCard then 
           { model with DoneSoFar=doneSoFar;GoodMove=Some Good }
+          |> Sound.Play.Good
           |> StateFlow.logMessage msg
           |> StateFlow.stopThere
         
         else 
         
           { model with DoneSoFar=doneSoFar;GoodMove=Some Bad }
+          |> Sound.Play.Bad
           |> StateFlow.logMessage msg
           |> StateFlow.stopThere
       
@@ -166,7 +221,6 @@ let update (msg: Msg) (model: Model) =
             | x when x >= fst Knob.AMBIENT_DECK && x <= snd Knob.AMBIENT_DECK -> 
               
               let difficulty = index-Knob.AMBIENT_START
-              printfn "difficulty %i" difficulty
               let rules = {model.Rules with Wanted=difficulty}
               { model with Rules = rules }
               |> StateFlow.goToNextState Msg.StartGame

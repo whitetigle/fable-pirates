@@ -94,23 +94,64 @@
        url('../public/fonts/alex-brush-v8-latin-regular.svg#AlexBrush') format('svg'); /* Legacy iOS */
 }
 
+/* pacifico-regular - latin */
+@font-face {
+  font-family: 'Pacifico';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../public/fonts/pacifico-v12-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Pacifico Regular'), local('Pacifico-Regular'),
+       url('../public/fonts/pacifico-v12-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../public/fonts/pacifico-v12-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../public/fonts/pacifico-v12-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../public/fonts/pacifico-v12-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../public/fonts/pacifico-v12-latin-regular.svg#Pacifico') format('svg'); /* Legacy iOS */
+}
 // Needed otherwise iframes show a disabled scrollbar
 html {
   overflow: hidden;
 }
 
 body {
+  font-family: 'Alex Brush';
   margin: 0;
   padding: 0;
 }
 
 // source: https://codepen.io/jakobud/pen/LyZJRB
 .label {
-  font-family: 'Alex Brush';
   $map: (576: 50, 768: 60, 992: 80,1280:140,1900:250);
   font-size: least-squares-fit($map);  
 }
 
+.title.is-1 {
+  $map: (992: 50,1280:80,1900:100);
+  font-size: least-squares-fit($map);
+}
+
+.title.is-2 {
+  $map: (992: 40,1280:60,1900:80);
+  font-size: least-squares-fit($map);  
+}
+
+.title.is-3 {
+  $map: (992: 20,1280:40,1900:60);
+  font-size: least-squares-fit($map);  
+}
+
+.title.is-4 {
+  $map: (992: 15,1280:30,1900:50);
+  font-size: least-squares-fit($map);  
+}
+
+.hero.is-black .title {
+  color:black;
+	text-shadow:
+		-1px -1px 0 whitesmoke,
+		1px -1px 0 whitesmoke,
+		-1px 1px 0 whitesmoke,
+		1px 1px 0 whitesmoke;  
+}
 
 .BigStar {
   padding-top: 4em;
