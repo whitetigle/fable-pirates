@@ -95,7 +95,14 @@ let prepareWishlist max (model:Model) =
         select input max ouput
       | _ -> outputDeck
     
-    select model.Hand max []
+    let list = 
+      model.Hand
+     |> List.filter( fun card ->  
+      match card.Item with 
+      | Card _ -> true
+      | _ -> false  )
+
+    select list max []
 
   {model with Wanted=wanted;DoneSoFar=wanted}
 
@@ -182,8 +189,8 @@ let addTraps (model:Model) =
             | _ -> Knobator "Tourne Boulé !!"
           | _ -> 
             match rand with 
-            | x when x >= 0. && x < 0.2 -> Mixator "Thermomixé !!"
-            | x when x >= 0.2 && x < 0.5 -> Wheel "Roue Infernale !!"
+//            | x when x >= 0. && x < 0.2 -> Mixator "Thermomixé !!"
+            | x when x >= 0.0 && x < 0.5 -> Wheel "Roue Infernale !!"
             | _ -> Knobator "Tourne Boulé !!"
         {card with Item=trap}
       else 

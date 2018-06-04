@@ -71,7 +71,7 @@ type Rules =
     CardsCount=24
     Wanted=7
     TrapCount=2
-    KnobThresholdIncrease=20
+    KnobThresholdIncrease=10
     Spin=1
   }
 

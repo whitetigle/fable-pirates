@@ -124,7 +124,7 @@ let update (msg: Msg) (model: Model) =
       |> CardHelper.startingHand model.Rules.CardsCount
       |> CardHelper.shuffleHand 
       |> CardHelper.prepareWishlist (model.Rules.Wanted-1)
-      |> CardHelper.addTraps
+      //|> CardHelper.addTraps
       |> StateFlow.logMessage msg
       |> StateFlow.stopThere
   
